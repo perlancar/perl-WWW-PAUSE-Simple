@@ -167,14 +167,20 @@ sub list_files {
 }
 
 $SPEC{delete_files} = {
-    %common_args,
+    v => 1.1,
+    args => {
+        %common_args,
+    },
 };
 sub delete_files {
     my %args = @_;
 }
 
 $SPEC{undelete_files} = {
-    %common_args,
+    v => 1.1,
+    args => {
+        %common_args,
+    },
 };
 sub undelete_files {
     my %args = @_;
@@ -182,7 +188,10 @@ sub undelete_files {
 }
 
 $SPEC{reindex} = {
-    %common_args,
+    v => 1.1,
+    args => {
+        %common_args,
+    },
 };
 sub reindex {
     my %args = @_;
@@ -190,7 +199,10 @@ sub reindex {
 }
 
 $SPEC{set_password} = {
-    %common_args,
+    v => 1.1,
+    args => {
+        %common_args,
+    },
 };
 sub set_password {
     my %args = @_;
@@ -198,7 +210,10 @@ sub set_password {
 }
 
 $SPEC{set_account_info} = {
-    %common_args,
+    v => 1.1,
+    args => {
+        %common_args,
+    },
 };
 sub set_account_info {
     my %args = @_;
