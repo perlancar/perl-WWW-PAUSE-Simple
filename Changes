@@ -1,5 +1,12 @@
 Revision history for WWW-PAUSE-Simple
 
+0.02    2015-02-06 (PERLANCAR)
+
+        - Implement 'delete', 'undelete', and 'reindex' subcommands.
+
+        - list: Add options --(no-)del and --query.
+
+
 0.01    2015-02-05 (PERLANCAR)
 
         - First early release, only 'list' and 'upload' have been implemented.
