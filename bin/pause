@@ -17,7 +17,7 @@ Perinci::CmdLine::Any->new(
         list       => { url => "${prefix}list_files" },
         delete     => { url => "${prefix}delete_files" },
         undelete   => { url => "${prefix}undelete_files" },
-        reindex    => { url => "${prefix}reindex" },
+        reindex    => { url => "${prefix}reindex_files" },
         password   => { url => "${prefix}set_password" },
         #'account-info' => { url => "${prefix}set_account_info" },
     },
@@ -35,22 +35,26 @@ First create a config file C<~/pause.conf> containing:
 
 and then:
 
- # list your files
- % pause list
- % pause list --detail; # see file sizes/mtimes/etc instead of just names
-
  # upload a file
  % pause upload Foo-Bar-0.12.tar.gz
  % pause upload Foo-Bar-0.12.tar.gz --subdir old/2014; # upload to a subdir
 
+ # list your files
+ % pause list
+ % pause list App- 1.0; # filter by strings/keywords
+ % pause list --detail; # see file sizes/mtimes/etc instead of just names
+
  # delete files
- ...
+ % pause delete Foo-Bar-0.12.tar.gz Foo-Bar-0.12.readme Foo-Bar-0.12.meta
+ % pause delete --all; # caution
 
  # undelete files scheduled for deletion (but not actually deleted yet)
- ...
+ % pause undelete Foo-Bar-0.12.tar.gz Foo-Bar-0.12.readme Foo-Bar-0.12.meta
+ % pause undelete --all
 
  # force reindexing
- ...
+ % pause reindex Foo-Bar-0.12.tar.gz Foo-Bar-0.12.meta
+ % pause reindex --all
 
  # change your password
  ...

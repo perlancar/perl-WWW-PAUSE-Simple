@@ -53,6 +53,22 @@ our %file_arg = (
     },
 );
 
+our %file_opt_arg = (
+    file => {
+        summary => 'File name',
+        schema  => ['array*', of=>'str*'],
+        pos => 0,
+        greedy => 1,
+    },
+);
+
+our %all_arg = (
+    all => {
+        summary => 'Apply to all files',
+        schema  => 'bool',
+    },
+);
+
 $SPEC{':package'} = {
     v => 1.1,
     summary => 'An API for PAUSE',
@@ -208,12 +224,23 @@ sub list_files {
     [200, "OK", \@files];
 }
 
-sub _delete_or_undelete_files {
+sub _delete_or_undelete_or_reindex_files {
     my $which = shift;
     my %args = @_;
 
-    my $files  = $args{file} // [];
-    @$files or return [400, "Please specify at least one file"];
+    my $files = $args{file} // [];
+    my $all   = $args{all};
+    if (!$all && !@$files) { return [400, "Please specify at least one file (or specify --all)"] }
+    if ( $all &&  @$files) { return [400, "Please don't specify any file if you use --all"] }
+
+    if ($all) {
+        my $listres = list_files(%args);
+        return [500, "Can't list files: $listres->[0] - $listres->[1]"]
+            unless $listres->[0] == 200;
+        $files = [grep {
+            !/CHECKSUMS$/ && ($which ne 'reindex' || !/\.readme$/)
+                          } @{ $listres->[2] }];
+    }
 
     my $res = _request(
         %args,
@@ -222,8 +249,9 @@ sub _delete_or_undelete_files {
                 HIDDENNAME                => $args{username},
                 ($which eq 'delete'   ? (SUBMIT_pause99_delete_files_delete   => "Delete"  ) : ()),
                 ($which eq 'undelete' ? (SUBMIT_pause99_delete_files_undelete => "Undelete") : ()),
-                SUBMIT_pause99_delete_files_undelete => "Delete",
-                pause99_delete_files_FILE => $files,
+                ($which eq 'reindex'  ? (SUBMIT_pause99_reindex_delete        => "Reindex" ) : ()),
+                ($which =~ /delete/   ? (pause99_delete_files_FILE => $files) : ()),
+                ($which eq 'reindex'  ? (pause99_reindex_FILE => $files) : ()),
             ],
         ],
     );
@@ -235,35 +263,55 @@ sub _delete_or_undelete_files {
 
 $SPEC{delete_files} = {
     v => 1.1,
+    summary => 'Delete files',
+    description => <<'_',
+
+When a file is deleted, it is not immediately deleted but has
+scheduled_for_deletion status for 72 hours, then deleted. During that time, the
+file can be undeleted.
+
+_
     args => {
         %common_args,
-        %file_arg,
+        %file_opt_arg,
+        %all_arg,
     },
 };
 sub delete_files {
-    _delete_or_undelete_files('delete', @_);
+    _delete_or_undelete_or_reindex_files('delete', @_);
 }
 
 $SPEC{undelete_files} = {
     v => 1.1,
+    summary => 'Undelete files',
+    description => <<'_',
+
+When a file is deleted, it is not immediately deleted but has
+scheduled_for_deletion status for 72 hours, then deleted. During that time, the
+file can be undeleted.
+
+_
     args => {
         %common_args,
-        %file_arg,
+        %file_opt_arg,
+        %all_arg,
     },
 };
 sub undelete_files {
-    _delete_or_undelete_files('undelete', @_);
+    _delete_or_undelete_or_reindex_files('undelete', @_);
 }
 
-$SPEC{reindex} = {
+$SPEC{reindex_files} = {
     v => 1.1,
+    summary => 'Force reindexing',
     args => {
         %common_args,
+        %file_opt_arg,
+        %all_arg,
     },
 };
-sub reindex {
-    my %args = @_;
-    [501, "Not yet implemented"];
+sub reindex_files {
+    _delete_or_undelete_or_reindex_files('reindex', @_);
 }
 
 $SPEC{set_password} = {
