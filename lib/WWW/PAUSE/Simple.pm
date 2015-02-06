@@ -129,12 +129,28 @@ $SPEC{list_files} = {
     args => {
         %common_args,
         %detail_arg,
+        query => {
+            summary => 'Filter result by keywords/string',
+            schema => ['array*', of=>'str*'],
+            pos => 0,
+            greedy => 1,
+            tags => ['category:filtering'],
+        },
+        del => {
+            summary => 'Only list files which are scheduled for deletion',
+            'summary.alt.bool.not' => 'Only list files which are not scheduled for deletion',
+            schema => 'bool',
+            tags => ['category:filtering'],
+        },
     },
 };
 sub list_files {
     require DateTime::Format::DateParse; # XXX any better module?
 
     my %args = @_;
+    my $q   = $args{query} // [];
+    my $del = $args{del};
+
     my $res = _request(
         %args,
         post_data => [{ACTION=>'show_files'}],
@@ -145,13 +161,16 @@ sub list_files {
         unless $res->content =~ m!<h3>Files in directory.+</h3><pre>(.+)</pre>!s;
     my $str = $1;
     my @files;
+  REC:
     while ($str =~ m!(?:\A |<br/> )(.+?)\s+(\d+)\s+(Scheduled for deletion \(due at )?(\w+, \d\d \w+ \d{4} \d\d:\d\d:\d\d GMT)!g) {
+
         my $time = DateTime::Format::DateParse->parse_datetime($4);
         if ($time) {
             $time = $time->epoch;
         } else {
             $time = 0;
         }
+
         my $rec = {
             name  => $1,
             size  => $2,
@@ -162,6 +181,17 @@ sub list_files {
         } else {
             $rec->{mtime} = $time;
         }
+
+        # filter
+        if (@$q) {
+            for (@$q) {
+                next REC unless index(lc($rec->{name}), lc($_)) >= 0;
+            }
+        }
+        if (defined $del) {
+            next if $del xor $rec->{scheduled_for_deletion};
+        }
+
         push @files, $args{detail} ? $rec : $rec->{name};
 
     }
