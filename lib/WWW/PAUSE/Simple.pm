@@ -25,12 +25,14 @@ our %common_args = (
         summary => 'PAUSE ID',
         schema  => 'str*',
         req     => 1,
+        tags    => ['common'],
     },
     password => {
         summary => 'PAUSE password',
         schema  => 'str*',
         is_password => 1,
         req     => 1,
+        tags    => ['common'],
     },
 );
 
