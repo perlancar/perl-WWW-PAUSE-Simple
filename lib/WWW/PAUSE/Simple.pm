@@ -350,4 +350,14 @@ B<STATUS: Experimental.>
 This module provides several API functions for performing common tasks on PAUSE.
 It comes with a CLI script L<pause>.
 
+
+=head1 SEE ALSO
+
+L<CPAN::Uploader> which also does uploading from CLI.
+
+L<WWW::PAUSE::CleanUpHomeDir> which can clean old releases from your PAUSE
+account (but no CLI). A similar subcommand will be added to C<pause> (e.g.
+C<pause clean>), which will provide an option to specify the number of old
+releases to keep.
+
 =cut
