@@ -43,6 +43,16 @@ our %detail_arg = (
     },
 );
 
+our %file_arg = (
+    file => {
+        summary => 'File name',
+        schema  => ['array*', of=>'str*'],
+        req => 1,
+        pos => 0,
+        greedy => 1,
+    },
+);
+
 $SPEC{':package'} = {
     v => 1.1,
     summary => 'An API for PAUSE',
@@ -113,7 +123,7 @@ sub upload_file {
         ]
     );
     return _htres2envres($res) unless $res->is_success;
-    return [543, "Can't scrape upload status from response"]
+    return [543, "Can't scrape upload status from response", $res->content]
         unless $res->content =~ m!<h3>Submitting query</h3>\s*<p>(.+?)</p>!s;
     my $str = $1;
     if ($str =~ /Query succeeded/) {
@@ -198,25 +208,51 @@ sub list_files {
     [200, "OK", \@files];
 }
 
+sub _delete_or_undelete_files {
+    my $which = shift;
+    my %args = @_;
+
+    my $files  = $args{file} // [];
+    @$files or return [400, "Please specify at least one file"];
+
+    my $res = _request(
+        %args,
+        post_data => [
+            [
+                HIDDENNAME                => $args{username},
+                ($which eq 'delete'   ? (SUBMIT_pause99_delete_files_delete   => "Delete"  ) : ()),
+                ($which eq 'undelete' ? (SUBMIT_pause99_delete_files_undelete => "Undelete") : ()),
+                SUBMIT_pause99_delete_files_undelete => "Delete",
+                pause99_delete_files_FILE => $files,
+            ],
+        ],
+    );
+    return _htres2envres($res) unless $res->is_success;
+    return [543, "Can't scrape $which status from response", $res->content]
+        unless $res->content =~ m!<h3>Files in directory!s;
+    [200,"OK"];
+}
+
 $SPEC{delete_files} = {
     v => 1.1,
     args => {
         %common_args,
+        %file_arg,
     },
 };
 sub delete_files {
-    my %args = @_;
+    _delete_or_undelete_files('delete', @_);
 }
 
 $SPEC{undelete_files} = {
     v => 1.1,
     args => {
         %common_args,
+        %file_arg,
     },
 };
 sub undelete_files {
-    my %args = @_;
-    [501, "Not yet implemented"];
+    _delete_or_undelete_files('undelete', @_);
 }
 
 $SPEC{reindex} = {
