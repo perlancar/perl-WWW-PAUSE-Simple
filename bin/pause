@@ -15,7 +15,15 @@ Perinci::CmdLine::Any->new(
     subcommands => {
         upload     => { url => "${prefix}upload_file" },
         list       => { url => "${prefix}list_files" },
+        ls         => {
+            url => "${prefix}list_files",
+            summary => 'Alias for list',
+        },
         delete     => { url => "${prefix}delete_files" },
+        rm         => {
+            url => "${prefix}delete_files",
+            summary => 'Alias for delete',
+        },
         undelete   => { url => "${prefix}undelete_files" },
         reindex    => { url => "${prefix}reindex_files" },
         password   => { url => "${prefix}set_password" },
@@ -64,5 +72,3 @@ and then:
 
  # change your email forwarding
  ...
-
-
