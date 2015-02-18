@@ -23,7 +23,7 @@ our %SPEC;
 our %common_args = (
     username => {
         summary => 'PAUSE ID',
-        schema  => 'str*',
+        schema  => ['str*', match=>'\A\w{2,9}\z', max_len=>9],
         req     => 1,
         tags    => ['common'],
     },
@@ -278,6 +278,7 @@ _
     },
 };
 sub delete_files {
+    my %args = @_; # only for DZP::Rinci::Wrap
     _delete_or_undelete_or_reindex_files('delete', @_);
 }
 
@@ -298,6 +299,7 @@ _
     },
 };
 sub undelete_files {
+    my %args = @_; # only for DZP::Rinci::Wrap
     _delete_or_undelete_or_reindex_files('undelete', @_);
 }
 
@@ -311,6 +313,7 @@ $SPEC{reindex_files} = {
     },
 };
 sub reindex_files {
+    my %args = @_; # only for DZP::Rinci::Wrap
     _delete_or_undelete_or_reindex_files('reindex', @_);
 }
 
