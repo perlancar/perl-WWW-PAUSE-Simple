@@ -1,5 +1,12 @@
 Revision history for WWW-PAUSE-Simple
 
+0.03    2015-02-19 (PERLANCAR)
+
+	- [dzil] Test using DZP::Rinci::Wrap.
+
+	- Add aliases: ls for list, rm for delete.
+
+
 0.02    2015-02-06 (PERLANCAR)
 
         - Implement 'delete', 'undelete', and 'reindex' subcommands.
