@@ -18,6 +18,8 @@ our @EXPORT_OK = qw(
                        set_account_info
                );
 
+use Perinci::Object;
+
 our %SPEC;
 
 our %common_args = (
@@ -98,17 +100,12 @@ sub _htres2envres {
 
 $SPEC{upload_file} = {
     v => 1.1,
-    summary => 'Upload a file to your PAUSE account',
+    summary => 'Upload file(s) to your PAUSE account',
     args => {
         %common_args,
-        file => {
-            summary => 'Path to file to upload',
-            schema => 'str*',
-            req => 1,
-            pos => 0,
-        },
+        %file_arg,
         subdir => {
-            summary => 'Subdirectory to put the file into',
+            summary => 'Subdirectory to put the file(s) into',
             schema  => 'str*',
             default => '',
         },
@@ -118,35 +115,55 @@ sub upload_file {
     require File::Basename;
 
     my %args = @_;
-    my $file   = $args{file};
+    my $files  = $args{file}
+        or return [400, "Please specify at least one file"];
     my $subdir = $args{subdir} // '';
 
-    (-f $file) or return [500, "No such file: $file"];
+    my $envres = envresmulti();
 
-    my $res = _request(
-        %args,
-        post_data => [
-            Content_Type => 'form-data',
-            Content => {
-                HIDDENNAME                        => $args{username},
-                CAN_MULTIPART                     => 0,
-                pause99_add_uri_upload            => File::Basename::basename($file),
-                SUBMIT_pause99_add_uri_httpupload => " Upload this file from my disk ",
-                pause99_add_uri_uri               => "",
-                pause99_add_uri_httpupload        => [$file],
-                (length($subdir) ? (pause99_add_uri_subdirtext => $subdir) : ()),
-            },
-        ]
-    );
-    return _htres2envres($res) unless $res->is_success;
-    return [543, "Can't scrape upload status from response", $res->content]
-        unless $res->content =~ m!<h3>Submitting query</h3>\s*<p>(.+?)</p>!s;
-    my $str = $1;
-    if ($str =~ /Query succeeded/) {
-        return [200, "OK", undef, {"func.raw_status" => $str}];
-    } else {
-        return [500, "Failed: $str"];
+    for my $file (@$files) {
+        my $res;
+        {
+            unless (-f $file) {
+                $res = [404, "No such file"];
+                last;
+            }
+
+            my $upload_res = _request(
+                %args,
+                post_data => [
+                    Content_Type => 'form-data',
+                    Content => {
+                        HIDDENNAME                        => $args{username},
+                        CAN_MULTIPART                     => 0,
+                        pause99_add_uri_upload            => File::Basename::basename($file),
+                        SUBMIT_pause99_add_uri_httpupload => " Upload this file from my disk ",
+                        pause99_add_uri_uri               => "",
+                        pause99_add_uri_httpupload        => [$file],
+                        (length($subdir) ? (pause99_add_uri_subdirtext => $subdir) : ()),
+                    },
+                ]
+            );
+            if (!$upload_res->is_success) {
+                $res = _htres2envres($upload_res);
+                last;
+            }
+            if ($res->content !~ m!<h3>Submitting query</h3>\s*<p>(.+?)</p>!s) {
+                $res = [543, "Can't scrape upload status from response", $upload_res->content];
+                last;
+            }
+            my $str = $1;
+            if ($str =~ /Query succeeded/) {
+                $res = [200, "OK", undef, {"func.raw_status" => $str}];
+            } else {
+                $res = [500, "Failed: $str"];
+            }
+        }
+        $res->[3] //= {};
+        $res->[3]{item_id} = $file;
+        $envres->add_result($res->[0], $res->[1], $res->[3]);
     }
+    $envres->as_struct;
 }
 
 $SPEC{list_files} = {
