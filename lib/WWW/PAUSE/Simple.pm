@@ -122,6 +122,7 @@ sub upload_file {
                 last;
             }
 
+            $log->tracef("Uploading %s ...", $file);
             my $httpres = _request(
                 %args,
                 post_data => [
@@ -141,7 +142,7 @@ sub upload_file {
                 $res = _htres2envres($httpres);
                 last;
             }
-            if ($res->content !~ m!<h3>Submitting query</h3>\s*<p>(.+?)</p>!s) {
+            if ($httpres->content !~ m!<h3>Submitting query</h3>\s*<p>(.+?)</p>!s) {
                 $res = [543, "Can't scrape upload status from response", $httpres->content];
                 last;
             }
@@ -154,6 +155,7 @@ sub upload_file {
         }
         $res->[3] //= {};
         $res->[3]{item_id} = $file;
+        $log->tracef("Result of upload: %s", $res);
         $envres->add_result($res->[0], $res->[1], $res->[3]);
     }
     $envres->as_struct;
@@ -188,6 +190,7 @@ sub list_files {
     );
 
     # convert wildcard patterns in arguments to regexp
+    $q = [@$q];
     for (@$q) {
         next unless String::Wildcard::Bash::contains_wildcard($_);
         my $re = Regexp::Wildcards->new(type=>'unix')->convert($_);
