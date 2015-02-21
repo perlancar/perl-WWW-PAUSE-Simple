@@ -6,7 +6,7 @@ package WWW::PAUSE::Simple;
 use 5.010001;
 use strict;
 use warnings;
-
+use Log::Any '$log';
 use Exporter qw(import);
 our @EXPORT_OK = qw(
                        upload_file
@@ -271,6 +271,7 @@ sub _delete_or_undelete_or_reindex_files {
         }
     }
 
+    $log->tracef("%s %s ...", $which, \@files);
     my $httpres = _request(
         %args,
         post_data => [

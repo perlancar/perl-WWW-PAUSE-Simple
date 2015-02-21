@@ -29,6 +29,7 @@ Perinci::CmdLine::Any->new(
         password   => { url => "${prefix}set_password" },
         #'account-info' => { url => "${prefix}set_account_info" },
     },
+    log => 1,
 )->run;
 
 # ABSTRACT: An API for PAUSE
