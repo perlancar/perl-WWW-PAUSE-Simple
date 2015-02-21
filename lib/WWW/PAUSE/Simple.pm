@@ -172,13 +172,7 @@ $SPEC{list_files} = {
     args => {
         %common_args,
         %detail_arg,
-        query => {
-            summary => 'Filter result by keywords/string',
-            schema => ['array*', of=>'str*'],
-            pos => 0,
-            greedy => 1,
-            tags => ['category:filtering'],
-        },
+        %file_opt_arg,
         del => {
             summary => 'Only list files which are scheduled for deletion',
             'summary.alt.bool.not' => 'Only list files which are not scheduled for deletion',
@@ -189,19 +183,29 @@ $SPEC{list_files} = {
 };
 sub list_files {
     require DateTime::Format::DateParse; # XXX any better module?
+    require String::Wildcard::Bash;
 
-    my %args = @_;
-    my $q   = $args{query} // [];
+    my %args  = @_;
+    my $q   = $args{file} // [];
     my $del = $args{del};
 
-    my $res = _request(
+    my $httpres = _request(
         %args,
         post_data => [{ACTION=>'show_files'}],
     );
-    return _htres2envres($res) unless $res->is_success;
+
+    # convert wildcard patterns in arguments to regexp
+    for (@$q) {
+        next unless String::Wildcard::Bash::contains_wildcard($_);
+        my $re = Regexp::Wildcards->new(type=>'unix')->convert($_);
+        $re = qr/\A($re)\z/;
+        $_ = $re;
+    }
+
+    return _htres2envres($httpres) unless $httpres->is_success;
     return [543, "Can't scrape list of files from response",
-            $res->content]
-        unless $res->content =~ m!<h3>Files in directory.+</h3><pre>(.+)</pre>!s;
+            $httpres->content]
+        unless $httpres->content =~ m!<h3>Files in directory.+</h3><pre>(.+)</pre>!s;
     my $str = $1;
     my @files;
   REC:
@@ -225,14 +229,16 @@ sub list_files {
             $rec->{mtime} = $time;
         }
 
-        # filter
-        if (@$q) {
-            for (@$q) {
-                next REC unless index(lc($rec->{name}), lc($_)) >= 0;
+        # filter by requested file/wildcard
+        for (@$q) {
+            if (ref($_) eq 'Regexp') {
+                next REC unless $rec->{name} =~ $_;
+            } else {
+                next REC unless $rec->{name} eq $_;
             }
         }
         if (defined $del) {
-            next if $del xor $rec->{scheduled_for_deletion};
+            next REC if $del xor $rec->{scheduled_for_deletion};
         }
 
         push @files, $args{detail} ? $rec : $rec->{name};
