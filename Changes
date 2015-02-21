@@ -1,5 +1,14 @@
 Revision history for WWW-PAUSE-Simple
 
+0.04    2015-02-21 (PERLANCAR)
+
+        - upload: Accept multiple files.
+
+        - list/delete/undelete/reindex: Accept filename/wildcard patterns as
+          arguments. Note that you might want to quote them first to avoid the
+          patterns being interpreted by your shell.
+
+
 0.03    2015-02-19 (PERLANCAR)
 
 	- [dzil] Test using DZP::Rinci::Wrap.
