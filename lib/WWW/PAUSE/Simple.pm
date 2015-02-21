@@ -47,8 +47,8 @@ our %detail_arg = (
 
 our %file_arg = (
     file => {
-        summary => 'File name',
-        schema  => ['array*', of=>'str*'],
+        summary => 'File name/wildcard pattern',
+        schema  => ['array*', of=>'str*', min_len=>1],
         req => 1,
         pos => 0,
         greedy => 1,
@@ -57,17 +57,10 @@ our %file_arg = (
 
 our %file_opt_arg = (
     file => {
-        summary => 'File name',
+        summary => 'File name/wildcard pattern',
         schema  => ['array*', of=>'str*'],
         pos => 0,
         greedy => 1,
-    },
-);
-
-our %all_arg = (
-    all => {
-        summary => 'Apply to all files',
-        schema  => 'bool',
     },
 );
 
@@ -129,7 +122,7 @@ sub upload_file {
                 last;
             }
 
-            my $upload_res = _request(
+            my $httpres = _request(
                 %args,
                 post_data => [
                     Content_Type => 'form-data',
@@ -144,12 +137,12 @@ sub upload_file {
                     },
                 ]
             );
-            if (!$upload_res->is_success) {
-                $res = _htres2envres($upload_res);
+            if (!$httpres->is_success) {
+                $res = _htres2envres($httpres);
                 last;
             }
             if ($res->content !~ m!<h3>Submitting query</h3>\s*<p>(.+?)</p>!s) {
-                $res = [543, "Can't scrape upload status from response", $upload_res->content];
+                $res = [543, "Can't scrape upload status from response", $httpres->content];
                 last;
             }
             my $str = $1;
@@ -248,24 +241,37 @@ sub list_files {
 }
 
 sub _delete_or_undelete_or_reindex_files {
+    require Regexp::Wildcards;
+    require String::Wildcard::Bash;
+
     my $which = shift;
     my %args = @_;
 
-    my $files = $args{file} // [];
-    my $all   = $args{all};
-    if (!$all && !@$files) { return [400, "Please specify at least one file (or specify --all)"] }
-    if ( $all &&  @$files) { return [400, "Please don't specify any file if you use --all"] }
+    my $files0 = $args{file} // [];
+    return [400, "Please specify at least one file"] unless @$files0;
 
-    if ($all) {
-        my $listres = list_files(%args);
-        return [500, "Can't list files: $listres->[0] - $listres->[1]"]
-            unless $listres->[0] == 200;
-        $files = [grep {
-            !/CHECKSUMS$/ && ($which ne 'reindex' || !/\.readme$/)
-                          } @{ $listres->[2] }];
+    my @files;
+    {
+        my $listres;
+        for my $file (@$files0) {
+            if (String::Wildcard::Bash::contains_wildcard($file)) {
+                unless ($listres) {
+                    $listres = list_files(%args);
+                    return [500, "Can't list files: $listres->[0] - $listres->[1]"]
+                        unless $listres->[0] == 200;
+                }
+                my $re = Regexp::Wildcards->new(type=>'unix')->convert($file);
+                $re = qr/\A($re)\z/;
+                for my $f (@{$listres->[2]}) {
+                    push @files, $f if $f =~ $re;
+                }
+            } else {
+                push @files, $file;
+            }
+        }
     }
 
-    my $res = _request(
+    my $httpres = _request(
         %args,
         post_data => [
             [
@@ -273,14 +279,14 @@ sub _delete_or_undelete_or_reindex_files {
                 ($which eq 'delete'   ? (SUBMIT_pause99_delete_files_delete   => "Delete"  ) : ()),
                 ($which eq 'undelete' ? (SUBMIT_pause99_delete_files_undelete => "Undelete") : ()),
                 ($which eq 'reindex'  ? (SUBMIT_pause99_reindex_delete        => "Reindex" ) : ()),
-                ($which =~ /delete/   ? (pause99_delete_files_FILE => $files) : ()),
-                ($which eq 'reindex'  ? (pause99_reindex_FILE => $files) : ()),
+                ($which =~ /delete/   ? (pause99_delete_files_FILE => \@files) : ()),
+                ($which eq 'reindex'  ? (pause99_reindex_FILE => \@files) : ()),
             ],
         ],
     );
-    return _htres2envres($res) unless $res->is_success;
-    return [543, "Can't scrape $which status from response", $res->content]
-        unless $res->content =~ m!<h3>Files in directory!s;
+    return _htres2envres($httpres) unless $httpres->is_success;
+    return [543, "Can't scrape $which status from response", $httpres->content]
+        unless $httpres->content =~ m!<h3>Files in directory!s;
     [200,"OK"];
 }
 
@@ -296,8 +302,7 @@ file can be undeleted.
 _
     args => {
         %common_args,
-        %file_opt_arg,
-        %all_arg,
+        %file_arg,
     },
 };
 sub delete_files {
@@ -317,8 +322,7 @@ file can be undeleted.
 _
     args => {
         %common_args,
-        %file_opt_arg,
-        %all_arg,
+        %file_arg,
     },
 };
 sub undelete_files {
@@ -331,8 +335,7 @@ $SPEC{reindex_files} = {
     summary => 'Force reindexing',
     args => {
         %common_args,
-        %file_opt_arg,
-        %all_arg,
+        %file_arg,
     },
 };
 sub reindex_files {
