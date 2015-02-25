@@ -1,5 +1,13 @@
 Revision history for WWW-PAUSE-Simple
 
+0.06    2015-02-25 (PERLANCAR)
+
+        - No functional changes.
+
+        - [dist] Rebuild with newer DZP:Rinci::Wrap which peppers '## this line
+          put by DZP:Rinci::Wrap' markers.
+
+
 0.05    2015-02-21 (PERLANCAR)
 
         - No functional changes.
