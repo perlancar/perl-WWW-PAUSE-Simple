@@ -1,5 +1,13 @@
 Revision history for WWW-PAUSE-Simple
 
+0.07    2015-02-26 (PERLANCAR)
+
+        - No functional changes.
+
+        - [dist] Rebuild with newer DZP:Rinci::Wrap (0.08) which generates code
+          to update Rinci metadata in source code.
+
+
 0.06    2015-02-25 (PERLANCAR)
 
         - No functional changes.
