@@ -45,6 +45,14 @@ our %detail_arg = (
     },
 );
 
+our %detail_l_arg = (
+    detail => {
+        summary => 'Whether to return detailed records',
+        schema  => 'bool',
+        cmdline_aliases => {l=>{}},
+    },
+);
+
 our %file_arg = (
     file => {
         summary => 'File name/wildcard pattern',
@@ -166,7 +174,7 @@ $SPEC{list_files} = {
     summary => 'List files on your PAUSE account',
     args => {
         %common_args,
-        %detail_arg,
+        %detail_l_arg,
         %file_opt_arg,
         del => {
             summary => 'Only list files which are scheduled for deletion',
