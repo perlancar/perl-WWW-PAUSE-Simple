@@ -18,11 +18,13 @@ Perinci::CmdLine::Any->new(
         ls         => {
             url => "${prefix}list_files",
             summary => 'Alias for list',
+            is_alias => 1,
         },
         delete     => { url => "${prefix}delete_files" },
         rm         => {
             url => "${prefix}delete_files",
             summary => 'Alias for delete',
+            is_alias => 1,
         },
         undelete   => { url => "${prefix}undelete_files" },
         reindex    => { url => "${prefix}reindex_files" },
