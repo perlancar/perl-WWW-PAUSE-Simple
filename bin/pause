@@ -50,12 +50,12 @@ and then:
 
  # list your files
  % pause list
- % pause list 'App-*'; # accept filenames/wildcard patterns, note: quote first
- % pause list --detail; # see file sizes/mtimes/etc instead of just names
+ % pause ls 'App-*'; # accept filenames/wildcard patterns, note: quote first
+ % pause ls -l     ; # see file sizes/mtimes/etc instead of just names
 
  # delete files
  % pause delete Foo-Bar-0.12.tar.gz Foo-Bar-0.12.readme Foo-Bar-0.12.meta
- % pause delete 'Foo-Bar-*'; # accept wildcard patterns, but quote first
+ % pause rm 'Foo-Bar-*'; # accept wildcard patterns, but quote first
 
  # undelete files scheduled for deletion (but not actually deleted yet)
  % pause undelete Foo-Bar-0.12.tar.gz Foo-Bar-0.12.readme Foo-Bar-0.12.meta
