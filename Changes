@@ -1,5 +1,14 @@
 Revision history for WWW-PAUSE-Simple
 
+0.09    2015-03-08 (PERLANCAR)
+
+        - No functional changes.
+
+        - [build] Rebuild with newer Pod::Weaver::Plugin::Rinci that skips
+          showing (the same) description & options for alias subcommands ('rm'
+          for 'delete', 'ls' for 'list').
+
+
 0.08    2015-03-05 (PERLANCAR)
 
         - Allow 'pause ls -l' (alias for 'pause ls --detail') for convenience
