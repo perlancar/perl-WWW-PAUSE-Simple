@@ -248,7 +248,15 @@ sub list_files {
         push @files, $args{detail} ? $rec : $rec->{name};
 
     }
-    [200, "OK", \@files];
+    my %resmeta;
+    if ($args{detail}) {
+        $resmeta{format_options} = {
+            any => {
+                table_column_orders => [[qw/name size mtime scheduled_for_deletion deletion_time/]],
+            },
+        };
+    }
+    [200, "OK", \@files, \%resmeta];
 }
 
 sub _delete_or_undelete_or_reindex_files {
