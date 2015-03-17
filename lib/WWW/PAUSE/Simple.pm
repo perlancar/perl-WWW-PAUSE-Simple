@@ -225,7 +225,7 @@ sub list_files {
         my $rec = {
             name  => $1,
             size  => $2,
-            scheduled_for_deletion => $3 ? 1:0,
+            is_scheduled_for_deletion => $3 ? 1:0,
         };
         if ($3) {
             $rec->{deletion_time} = $time;
@@ -242,7 +242,7 @@ sub list_files {
             }
         }
         if (defined $del) {
-            next REC if $del xor $rec->{scheduled_for_deletion};
+            next REC if $del xor $rec->{is_scheduled_for_deletion};
         }
 
         push @files, $args{detail} ? $rec : $rec->{name};
@@ -252,7 +252,7 @@ sub list_files {
     if ($args{detail}) {
         $resmeta{format_options} = {
             any => {
-                table_column_orders => [[qw/name size mtime scheduled_for_deletion deletion_time/]],
+                table_column_orders => [[qw/name size mtime is_scheduled_for_deletion deletion_time/]],
             },
         };
     }
