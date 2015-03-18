@@ -300,6 +300,7 @@ _
     },
 };
 sub list_dists {
+    require List::MoreUtils;
     require Version::Util;
     use experimental 'smartmatch';
 
@@ -366,7 +367,7 @@ sub list_dists {
     }
 
     unless ($args{detail}) {
-        @dists = map { $_->{name} } @dists;
+        @dists = List::MoreUtils::uniq(map { $_->{name} } @dists);
     }
 
     my %resmeta;
