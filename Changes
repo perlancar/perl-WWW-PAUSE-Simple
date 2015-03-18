@@ -1,5 +1,20 @@
 Revision history for WWW-PAUSE-Simple
 
+0.10    2015-03-18 (PERLANCAR)
+
+        - Add --dry-run option for rm, undelete, reindex.
+
+        - Add command: cleanup (to clean older releases, like
+          WWW::PAUSE::CleanUpHomeDir).
+
+        - Add command: list-dists.
+
+        - [Incompatible change] ls: Rename field scheduled_for_deletion ->
+          is_scheduled_for_deletion so autoformatting works nicer
+
+        - Other bug fixes and tweaks.
+
+
 0.09    2015-03-08 (PERLANCAR)
 
         - No functional changes.
