@@ -449,7 +449,7 @@ sub _delete_or_undelete_or_reindex_files {
         for my $file (@$files0) {
             if (String::Wildcard::Bash::contains_wildcard($file)) {
                 unless ($listres) {
-                    $listres = list_files(%args);
+                    $listres = list_files(_common_args(\%args));
                     return [500, "Can't list files: $listres->[0] - $listres->[1]"]
                         unless $listres->[0] == 200;
                 }
