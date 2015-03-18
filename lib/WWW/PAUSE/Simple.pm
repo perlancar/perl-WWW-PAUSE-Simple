@@ -290,7 +290,13 @@ sub _delete_or_undelete_or_reindex_files {
         }
     }
 
-    $log->tracef("%s %s ...", $which, \@files);
+    if ($args{-dry_run}) {
+        $log->infof("[dry-run] %s %s", $which, \@files);
+        return [200, "OK (dry-run)"];
+    } else {
+        $log->tracef("%s %s ...", $which, \@files);
+    }
+
     my $httpres = _request(
         %args,
         post_data => [
@@ -324,6 +330,7 @@ _
         %common_args,
         %file_arg,
     },
+    features => {dry_run=>1},
 };
 sub delete_files {
     my %args = @_; # only for DZP::Rinci::Wrap
@@ -344,6 +351,7 @@ _
         %common_args,
         %file_arg,
     },
+    features => {dry_run=>1},
 };
 sub undelete_files {
     my %args = @_; # only for DZP::Rinci::Wrap
@@ -357,6 +365,7 @@ $SPEC{reindex_files} = {
         %common_args,
         %file_arg,
     },
+    features => {dry_run=>1},
 };
 sub reindex_files {
     my %args = @_; # only for DZP::Rinci::Wrap
