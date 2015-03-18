@@ -303,7 +303,7 @@ sub list_dists {
 
     my %args  = @_;
 
-    my $res = list_files(_common_args(\%args));
+    my $res = list_files(_common_args(\%args), del=>0);
     return [500, "Can't list files: $res->[0] - $res->[1]"] if $res->[0] != 200;
 
     my $newest_n;
