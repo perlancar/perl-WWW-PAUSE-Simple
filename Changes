@@ -1,5 +1,15 @@
 Revision history for WWW-PAUSE-Simple
 
+0.11    2015-03-18 (PERLANCAR)
+
+        - No functional changes.
+
+        - A small bug fix & tweak.
+
+        - [Build] Rebuild with newer version of DZP:Rinci::Wrap, the old version
+          contains a bug which caused line numbers to shift.
+
+
 0.10    2015-03-18 (PERLANCAR)
 
         - Add --dry-run option for rm, undelete, reindex.
