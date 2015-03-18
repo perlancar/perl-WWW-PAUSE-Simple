@@ -417,6 +417,7 @@ sub delete_old_releases {
     return [304, "No older releases"] unless @$old_files;
     delete_files(_common_args(\%args),
                  file=>$old_files, -dry_run=>$args{-dry_run});
+
 }
 
 sub _delete_or_undelete_or_reindex_files {
@@ -448,6 +449,10 @@ sub _delete_or_undelete_or_reindex_files {
                 push @files, $file;
             }
         }
+    }
+
+    unless (@files) {
+        return [304, "No files to process"];
     }
 
     if ($args{-dry_run}) {
