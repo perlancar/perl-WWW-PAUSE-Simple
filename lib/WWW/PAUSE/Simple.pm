@@ -22,6 +22,8 @@ use Perinci::Object;
 
 our %SPEC;
 
+our $re_archive_ext = qr/(?:tar|tar\.(?:Z|gz|bz2|xz)|zip|rar)/;
+
 our %common_args = (
     username => {
         summary => 'PAUSE ID',
@@ -322,7 +324,7 @@ sub list_dists {
         unless ($file =~ /\A
                           (\w+(?:-\w+)*)
                           -v?(\d+(?:\.\d+){0,2}(_\d+|-TRIAL)?)
-                          \.(?:tar|tar\.(?:Z|gz|bz2|xz)|zip|rar)
+                          \.$re_archive_ext
                           \z/ix) {
             $log->debugf("Skipping %s: doesn't match release regex", $file);
             next;
@@ -414,10 +416,21 @@ sub delete_old_releases {
     return [500, "Can't list dists: $res->[0] - $res->[1]"] if $res->[0] != 200;
     my $old_files = $res->[3]{'func.old_files'};
 
-    return [304, "No older releases"] unless @$old_files;
-    delete_files(_common_args(\%args),
-                 file=>$old_files, -dry_run=>$args{-dry_run});
-
+    return [304, "No older releases", undef,
+            {'cmdline.result'=>'There are no older releases to delete'}]
+        unless @$old_files;
+    my @to_delete;
+    for my $file (@$old_files) {
+        $file =~ s/\.$re_archive_ext\z//;
+        push @to_delete, "$file.*";
+    }
+    $res = delete_files(_common_args(\%args),
+                        file=>\@to_delete, -dry_run=>$args{-dry_run});
+    return $res unless $res->[0] != 200;
+    $res->[3]{'cmdline.result'} =
+        ($args{-dry_run} ? "[dry-run] ":"") .
+            "Deleted ".scalar(@{ $res->[3]{'func.files'} // [] })." file(s)";
+    $res;
 }
 
 sub _delete_or_undelete_or_reindex_files {
@@ -478,7 +491,7 @@ sub _delete_or_undelete_or_reindex_files {
     return _htres2envres($httpres) unless $httpres->is_success;
     return [543, "Can't scrape $which status from response", $httpres->content]
         unless $httpres->content =~ m!<h3>Files in directory!s;
-    [200,"OK"];
+    [200,"OK", undef, {'func.files'=>\@files}];
 }
 
 $SPEC{delete_files} = {
