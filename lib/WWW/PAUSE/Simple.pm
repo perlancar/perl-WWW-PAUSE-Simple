@@ -454,7 +454,7 @@ sub _delete_or_undelete_or_reindex_files {
         $log->warnf("[dry-run] %s %s", $which, \@files);
         return [200, "OK (dry-run)"];
     } else {
-        $log->tracef("%s %s ...", $which, \@files);
+        $log->infof("%s %s ...", $which, \@files);
     }
 
     my $httpres = _request(
