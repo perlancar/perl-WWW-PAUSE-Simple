@@ -426,8 +426,8 @@ sub delete_old_releases {
     }
     $res = delete_files(_common_args(\%args),
                         file=>\@to_delete, -dry_run=>$args{-dry_run});
-    return $res unless $res->[0] == 200;
-    my $deleted_files = $res->[3]{'func.files'};
+    return $res if $res->[0] != 200 || $args{-dry_run};
+    my $deleted_files = $res->[3]{'func.files'} // [];
     if (@$deleted_files) {
         $res->[3]{'cmdline.result'} = $deleted_files;
     } else {
