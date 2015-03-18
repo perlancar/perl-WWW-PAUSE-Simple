@@ -77,6 +77,11 @@ $SPEC{':package'} = {
     summary => 'An API for PAUSE',
 };
 
+sub _common_args {
+    my $args = shift;
+    (username=>$args->{username}, password=>$args->{password});
+}
+
 sub _request {
     require HTTP::Request::Common;
 
@@ -259,6 +264,161 @@ sub list_files {
     [200, "OK", \@files, \%resmeta];
 }
 
+$SPEC{list_dists} = {
+    v => 1.1,
+    summary => 'List distributions on your PAUSE account',
+    description => <<'_',
+
+Distribution names will be extracted from tarball/zip filenames.
+
+Unknown/unparseable filenames will be skipped.
+
+_
+    args => {
+        %common_args,
+        %detail_l_arg,
+        newest => {
+            schema => 'bool',
+            summary => 'Only show newest non-dev version',
+            description => <<'_',
+
+Dev versions will be skipped.
+
+_
+        },
+        newest_n => {
+            schema => ['int*', min=>1],
+            summary => 'Only show this number of newest non-dev versions',
+            description => <<'_',
+
+Dev versions will be skipped.
+
+_
+        },
+    },
+};
+sub list_dists {
+    require Version::Util;
+    use experimental 'smartmatch';
+
+    my %args  = @_;
+
+    my $res = list_files(_common_args(\%args));
+    return [500, "Can't list files: $res->[0] - $res->[1]"] if $res->[0] != 200;
+
+    my $newest_n;
+    if ($args{newest_n}) {
+        $newest_n = $args{newest_n};
+    } elsif ($args{newest}) {
+        $newest_n = 1;
+    }
+
+    my @dists;
+    for my $file (@{$res->[2]}) {
+        if ($file =~ m!/!) {
+            $log->debugf("Skipping %s: under a subdirectory", $file);
+            next;
+        }
+        unless ($file =~ /\A
+                          (\w+(?:-\w+)*)
+                          -v?(\d+(?:\.\d+){0,2}(_\d+|-TRIAL)?)
+                          \.(?:tar|tar\.(?:Z|gz|bz2|xz)|zip|rar)
+                          \z/ix) {
+            $log->debugf("Skipping %s: doesn't match release regex", $file);
+            next;
+        }
+        my ($dist, $version, $is_dev) = ($1, $2, $3);
+        next if $is_dev && $newest_n;
+        push @dists, {
+            name => $dist,
+            file => $file,
+            version => $version,
+            is_dev_version => $is_dev ? 1:0,
+        };
+    }
+
+    my @old_files;
+    if ($newest_n) {
+        my %dist_versions;
+        for my $dist (@dists) {
+            push @{ $dist_versions{$dist->{name}} }, $dist->{version};
+        }
+        for my $dist (keys %dist_versions) {
+            $dist_versions{$dist} = [
+                sort { -Version::Util::cmp_version($a, $b) }
+                    @{ $dist_versions{$dist} }];
+            if (@{ $dist_versions{$dist} } > $newest_n) {
+                $dist_versions{$dist} = [splice(
+                    @{ $dist_versions{$dist} }, 0, $newest_n)];
+            }
+        }
+        my @old_dists = @dists;
+        @dists = ();
+        for my $dist (@old_dists) {
+            if ($dist->{version} ~~ @{ $dist_versions{$dist->{name}} }) {
+                push @dists, $dist;
+            } else {
+                push @old_files, $dist->{file};
+            }
+        }
+    }
+
+    unless ($args{detail}) {
+        @dists = map { $_->{name} } @dists;
+    }
+
+    my %resmeta;
+    if ($newest_n) {
+        $resmeta{"func.old_files"} = \@old_files;
+    }
+    if ($args{detail}) {
+        $resmeta{format_options} = {
+            any => {
+                table_column_orders => [[qw/name version is_dev_version file/]],
+            },
+        };
+    }
+    [200, "OK", \@dists, \%resmeta];
+}
+
+$SPEC{delete_old_releases} = {
+    v => 1.1,
+    summary => 'Delete older versions of distributions on your PAUSE account',
+    description => <<'_',
+
+Developer releases will not be deleted.
+
+_
+    args => {
+        %common_args,
+        %detail_l_arg,
+        num_keep => {
+            schema => ['int*', min=>1],
+            default => 1,
+            summary => 'Number of new versions (including newest) to keep',
+            cmdline_aliases => { n=>{} },
+            description => <<'_',
+
+1 means to only keep the newest version, 2 means to keep the newest and the
+second newest, and so on.
+
+_
+        },
+    },
+    features => {dry_run=>1},
+};
+sub delete_old_releases {
+    my %args = @_;
+
+    my $res = list_dists(_common_args(\%args), newest_n=>$args{num_keep}//1);
+    return [500, "Can't list dists: $res->[0] - $res->[1]"] if $res->[0] != 200;
+    my $old_files = $res->[3]{'func.old_files'};
+
+    return [304, "No older releases"] unless @$old_files;
+    delete_files(_common_args(\%args),
+                 file=>$old_files, -dry_run=>$args{-dry_run});
+}
+
 sub _delete_or_undelete_or_reindex_files {
     require Regexp::Wildcards;
     require String::Wildcard::Bash;
@@ -291,7 +451,7 @@ sub _delete_or_undelete_or_reindex_files {
     }
 
     if ($args{-dry_run}) {
-        $log->infof("[dry-run] %s %s", $which, \@files);
+        $log->warnf("[dry-run] %s %s", $which, \@files);
         return [200, "OK (dry-run)"];
     } else {
         $log->tracef("%s %s ...", $which, \@files);
