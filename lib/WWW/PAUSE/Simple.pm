@@ -456,7 +456,7 @@ sub _delete_or_undelete_or_reindex_files {
                 my $re = Regexp::Wildcards->new(type=>'unix')->convert($file);
                 $re = qr/\A($re)\z/;
                 for my $f (@{$listres->[2]}) {
-                    push @files, $f if $f =~ $re;
+                    push @files, $f if $f =~ $re && !($f ~~ @files);
                 }
             } else {
                 push @files, $file;
