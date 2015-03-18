@@ -426,14 +426,18 @@ sub delete_old_releases {
     }
     $res = delete_files(_common_args(\%args),
                         file=>\@to_delete, -dry_run=>$args{-dry_run});
-    return $res unless $res->[0] != 200;
-    $res->[3]{'cmdline.result'} =
-        ($args{-dry_run} ? "[dry-run] ":"") .
-            "Deleted ".scalar(@{ $res->[3]{'func.files'} // [] })." file(s)";
+    return $res unless $res->[0] == 200;
+    my $deleted_files = $res->[3]{'func.files'};
+    if (@$deleted_files) {
+        $res->[3]{'cmdline.result'} = $deleted_files;
+    } else {
+        $res->[3]{'cmdline.result'} = 'Deleted 0 files';
+    }
     $res;
 }
 
 sub _delete_or_undelete_or_reindex_files {
+    use experimental 'smartmatch';
     require Regexp::Wildcards;
     require String::Wildcard::Bash;
 
