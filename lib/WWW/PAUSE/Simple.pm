@@ -13,7 +13,9 @@ our @EXPORT_OK = qw(
                        list_files
                        delete_files
                        undelete_files
-                       reindex
+                       reindex_files
+                       list_dists
+                       delete_old_releases
                        set_password
                        set_account_info
                );
