@@ -193,6 +193,7 @@ $SPEC{list_files} = {
 };
 sub list_files {
     require DateTime::Format::DateParse; # XXX any better module?
+    require Regexp::Wildcards;
     require String::Wildcard::Bash;
 
     my %args  = @_;
