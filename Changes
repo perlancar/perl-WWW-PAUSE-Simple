@@ -1,5 +1,12 @@
 Revision history for WWW-PAUSE-Simple
 
+0.13    2015-03-25 (PERLANCAR)
+
+	- No functional changes.
+
+	- Add empty module to ease installation: App::pause.
+
+
 0.12    2015-03-18 (PERLANCAR)
 
 	- No functional changes.
