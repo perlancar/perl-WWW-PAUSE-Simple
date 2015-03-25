@@ -604,4 +604,6 @@ account (but no CLI). A similar subcommand will be added to C<pause> (e.g.
 C<pause clean>), which will provide an option to specify the number of old
 releases to keep.
 
+L<https://perlancar.wordpress.com/2015/03/25/interacting-with-pause-using-cli/>
+
 =cut
