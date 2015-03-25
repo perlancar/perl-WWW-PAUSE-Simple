@@ -1,5 +1,14 @@
 Revision history for WWW-PAUSE-Simple
 
+0.14    2015-03-25 (PERLANCAR)
+
+	- [doc] Add a link to blog post.
+
+	- Update/fix exports.
+
+	- [Bugfix] Forgot to add 'require Regexp::Wildcards' in one place.
+
+
 0.13    2015-03-25 (PERLANCAR)
 
 	- No functional changes.
