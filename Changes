@@ -1,5 +1,13 @@
 Revision history for WWW-PAUSE-Simple
 
+0.15    2015-03-25 (PERLANCAR)
+
+	- No functional changes.
+
+        - [dist] Rebuild with newer DZP:GenShellCompletion (0.09) which fixes a
+          bug where Perl::osnames prereq was not registered.
+
+
 0.14    2015-03-25 (PERLANCAR)
 
 	- [doc] Add a link to blog post.
