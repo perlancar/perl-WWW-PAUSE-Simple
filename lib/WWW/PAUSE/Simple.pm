@@ -589,8 +589,6 @@ sub set_account_info {
 
 =head1 DESCRIPTION
 
-B<STATUS: Experimental.>
-
 This module provides several API functions for performing common tasks on PAUSE.
 It comes with a CLI script L<pause>.
 
@@ -600,9 +598,7 @@ It comes with a CLI script L<pause>.
 L<CPAN::Uploader> which also does uploading from CLI.
 
 L<WWW::PAUSE::CleanUpHomeDir> which can clean old releases from your PAUSE
-account (but no CLI). A similar subcommand will be added to C<pause> (e.g.
-C<pause clean>), which will provide an option to specify the number of old
-releases to keep.
+account (CLI example is provided script).
 
 L<https://perlancar.wordpress.com/2015/03/25/interacting-with-pause-using-cli/>
 
