@@ -7,10 +7,10 @@ use 5.010;
 use strict;
 use warnings;
 
-use Perinci::CmdLine::Any;
+use Perinci::CmdLine::pause;
 
 my $prefix = '/WWW/PAUSE/Simple/';
-Perinci::CmdLine::Any->new(
+Perinci::CmdLine::pause->new(
     url => $prefix,
     subcommands => {
         upload     => { url => "${prefix}upload_file" },
@@ -46,7 +46,10 @@ First create a config file C<~/pause.conf> containing:
  username=<Your PAUSE ID>
  password=<Your PAUSE password>
 
-and then:
+or if you have C<~/.pause> from L<cpan-upload>, C<pause> can read it too
+(encrypted C<.pause> is currently not supported).
+
+Then:
 
  # upload one or more files
  % pause upload Foo-Bar-0.12.tar.gz Baz-2.24.tar.gz

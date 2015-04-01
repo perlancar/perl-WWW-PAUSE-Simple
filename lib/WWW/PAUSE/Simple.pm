@@ -6,7 +6,7 @@ package WWW::PAUSE::Simple;
 use 5.010001;
 use strict;
 use warnings;
-use Log::Any '$log';
+use Log::Any::IfLOG '$log';
 use Exporter qw(import);
 our @EXPORT_OK = qw(
                        upload_file
