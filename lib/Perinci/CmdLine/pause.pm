@@ -19,7 +19,7 @@ sub hook_after_read_config_file {
     return unless -f $path;
 
     open my($fh), "<", $path or die [500, "Can't read $path: $!"];
-    $log->tracef("Reading %s ...", $path);
+    $log->tracef("[pericmd-pause] Reading %s ...", $path);
     $r->{read_config_files} = [$path];
     while (<$fh>) {
         if (/^user\s+(.+)/) { $r->{config}{GLOBAL}{username} = $1 }
