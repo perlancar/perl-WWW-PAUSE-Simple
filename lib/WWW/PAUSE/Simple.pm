@@ -57,10 +57,12 @@ our %detail_l_arg = (
     },
 );
 
-our %file_arg = (
-    file => {
-        summary => 'File name/wildcard pattern',
+our %files_arg = (
+    files => {
+        summary => 'File names/wildcard patterns',
+        'summary.alt.plurality.singular' => 'File name/wildcard pattern',
         schema  => ['array*', of=>'str*', min_len=>1],
+        'x.name.is_plural' => 1,
         req => 1,
         pos => 0,
         greedy => 1,
@@ -68,9 +70,11 @@ our %file_arg = (
 );
 
 our %file_opt_arg = (
-    file => {
-        summary => 'File name/wildcard pattern',
+    files => {
+        summary => 'File names/wildcard patterns',
+        'summary.alt.plurality.singular' => 'File name/wildcard pattern',
         schema  => ['array*', of=>'str*'],
+        'x.name.is_plural' => 1,
         pos => 0,
         greedy => 1,
     },
@@ -113,7 +117,7 @@ $SPEC{upload_file} = {
     summary => 'Upload file(s) to your PAUSE account',
     args => {
         %common_args,
-        %file_arg,
+        %files_arg,
         subdir => {
             summary => 'Subdirectory to put the file(s) into',
             schema  => 'str*',
@@ -125,7 +129,7 @@ sub upload_file {
     require File::Basename;
 
     my %args = @_;
-    my $files  = $args{file}
+    my $files  = $args{files}
         or return [400, "Please specify at least one file"];
     my $subdir = $args{subdir} // '';
 
@@ -199,7 +203,7 @@ sub list_files {
     require String::Wildcard::Bash;
 
     my %args  = @_;
-    my $q   = $args{file} // [];
+    my $q   = $args{files} // [];
     my $del = $args{del};
 
     my $httpres = _request(
@@ -448,7 +452,7 @@ sub _delete_or_undelete_or_reindex_files {
     my $which = shift;
     my %args = @_;
 
-    my $files0 = $args{file} // [];
+    my $files0 = $args{files} // [];
     return [400, "Please specify at least one file"] unless @$files0;
 
     my @files;
@@ -514,7 +518,7 @@ file can be undeleted.
 _
     args => {
         %common_args,
-        %file_arg,
+        %files_arg,
     },
     features => {dry_run=>1},
 };
@@ -535,7 +539,7 @@ file can be undeleted.
 _
     args => {
         %common_args,
-        %file_arg,
+        %files_arg,
     },
     features => {dry_run=>1},
 };
@@ -549,7 +553,7 @@ $SPEC{reindex_files} = {
     summary => 'Force reindexing',
     args => {
         %common_args,
-        %file_arg,
+        %files_arg,
     },
     features => {dry_run=>1},
 };
