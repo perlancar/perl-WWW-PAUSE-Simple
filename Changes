@@ -1,5 +1,12 @@
 Revision history for WWW-PAUSE-Simple
 
+0.17    2015-04-04 (PERLANCAR)
+
+	- No functional changes.
+
+	- [doc] Mention ~/.pause in FILES section.
+
+
 0.16    2015-04-01 (PERLANCAR)
 
 	- Read .pause config file, suggested by Ivan Wills [RT#103236].
