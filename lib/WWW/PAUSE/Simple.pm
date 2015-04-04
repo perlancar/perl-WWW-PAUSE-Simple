@@ -248,12 +248,18 @@ sub list_files {
         }
 
         # filter by requested file/wildcard
-        for (@$q) {
-            if (ref($_) eq 'Regexp') {
-                next REC unless $rec->{name} =~ $_;
-            } else {
-                next REC unless $rec->{name} eq $_;
+      FILTER_QUERY:
+        {
+            last unless @$q;
+            for (@$q) {
+                if (ref($_) eq 'Regexp') {
+                    last FILTER_QUERY if $rec->{name} =~ $_;
+                } else {
+                    last FILTER_QUERY if $rec->{name} eq $_;
+                }
             }
+            # nothing matches
+            next REC;
         }
         if (defined $del) {
             next REC if $del xor $rec->{is_scheduled_for_deletion};
