@@ -84,3 +84,10 @@ Then:
 
  # change your email forwarding
  ...
+
+
+=head1 prepend:FILES
+
+~/.pause
+
+=cut
