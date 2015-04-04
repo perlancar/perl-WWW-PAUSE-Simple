@@ -1,5 +1,13 @@
 Revision history for WWW-PAUSE-Simple
 
+0.18    2015-04-04 (PERLANCAR)
+
+	- [Bugfix] list: multiple files mentioned should be evaluated in OR
+	  logic, not AND.
+
+	- [ux] Rename 'file' argument to 'files'.
+
+
 0.17    2015-04-04 (PERLANCAR)
 
 	- No functional changes.
