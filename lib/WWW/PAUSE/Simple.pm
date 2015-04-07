@@ -439,7 +439,7 @@ sub delete_old_releases {
         push @to_delete, "$file.*";
     }
     $res = delete_files(_common_args(\%args),
-                        file=>\@to_delete, -dry_run=>$args{-dry_run});
+                        files=>\@to_delete, -dry_run=>$args{-dry_run});
     return $res if $res->[0] != 200 || $args{-dry_run};
     my $deleted_files = $res->[3]{'func.files'} // [];
     if (@$deleted_files) {
