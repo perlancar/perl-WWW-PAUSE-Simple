@@ -1,5 +1,10 @@
 Revision history for WWW-PAUSE-Simple
 
+0.19    2015-04-07 (PERLANCAR)
+
+	- [Bugfix] Forgot to adjust argument name (file -> files).
+
+
 0.18    2015-04-04 (PERLANCAR)
 
 	- [Bugfix] list: multiple files mentioned should be evaluated in OR
