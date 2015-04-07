@@ -1,5 +1,13 @@
 Revision history for WWW-PAUSE-Simple
 
+0.20    2015-04-07 (PERLANCAR)
+
+        - No functional changes.
+
+        - [dist] Rebuild with newer Pod::Weaver::Plugin::Rinci for producing
+          Configuration POD section.
+
+
 0.19    2015-04-07 (PERLANCAR)
 
 	- [Bugfix] Forgot to adjust argument name (file -> files).
