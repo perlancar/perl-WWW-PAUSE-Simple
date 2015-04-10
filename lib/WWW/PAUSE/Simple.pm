@@ -404,6 +404,12 @@ $SPEC{delete_old_releases} = {
 
 Developer releases will not be deleted.
 
+To delete developer releases, you can use `delete_files` (rm), e.g. from the
+command line:
+
+    % pause rm 'My-Module-*TRIAL*'; # delete a dist's trial releases
+    % pause rm '*TRIAL*' '*_*'; # delete all files containing TRIAL or underscore
+
 _
     args => {
         %common_args,
