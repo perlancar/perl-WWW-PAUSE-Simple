@@ -198,7 +198,7 @@ $SPEC{list_files} = {
     },
 };
 sub list_files {
-    require DateTime::Format::DateParse; # XXX any better module?
+    require Date::Parse;
     require Regexp::Wildcards;
     require String::Wildcard::Bash;
 
@@ -229,12 +229,7 @@ sub list_files {
   REC:
     while ($str =~ m!(?:\A |<br/> )(.+?)\s+(\d+)\s+(Scheduled for deletion \(due at )?(\w+, \d\d \w+ \d{4} \d\d:\d\d:\d\d GMT)!g) {
 
-        my $time = DateTime::Format::DateParse->parse_datetime($4);
-        if ($time) {
-            $time = $time->epoch;
-        } else {
-            $time = 0;
-        }
+        my $time = Date::Parse::str2time($4, "UTC");
 
         my $rec = {
             name  => $1,
