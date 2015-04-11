@@ -606,7 +606,7 @@ sub set_account_info {
 =head1 DESCRIPTION
 
 This module provides several API functions for performing common tasks on PAUSE.
-It comes with a CLI script L<pause>.
+There is also a CLI script L<pause> distributed separately in L<App::pause>.
 
 
 =head1 SEE ALSO
