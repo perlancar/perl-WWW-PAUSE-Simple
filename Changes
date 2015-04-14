@@ -1,5 +1,16 @@
 Revision history for WWW-PAUSE-Simple
 
+0.21    2015-04-15 (PERLANCAR)
+
+	- Replace DateTime::Format::DateParse with Date::Parse directly to
+	  reduce deps.
+
+	- Split CLI to another distribution (App-pause) so it can be
+	  fatpacked to reduce dependencies.
+
+	- Add a tip on deleting developer releases using delete_files.
+
+
 0.20    2015-04-07 (PERLANCAR)
 
         - No functional changes.
