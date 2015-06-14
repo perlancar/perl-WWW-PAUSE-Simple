@@ -123,6 +123,18 @@ $SPEC{upload_file} = {
             schema  => 'str*',
             default => '',
         },
+        delay => {
+            summary => 'Pause a number of seconds between files',
+            schema => ['int*', min=>0],
+            description => <<'_',
+
+If you upload a lot of files (e.g. 7-10 or more) at a time, the PAUSE indexer
+currently might choke with SQLite database locking problem and thus fail to
+index your releases. Giving a delay of say 2-3 minutes (120-180 seconds) between
+files will alleviate this problem.
+
+_
+        },
     },
 };
 sub upload_file {
@@ -135,6 +147,7 @@ sub upload_file {
 
     my $envres = envresmulti();
 
+    my $i = 0;
     for my $file (@$files) {
         my $res;
         {
@@ -178,6 +191,11 @@ sub upload_file {
         $res->[3]{item_id} = $file;
         $log->tracef("Result of upload: %s", $res);
         $envres->add_result($res->[0], $res->[1], $res->[3]);
+
+        if ($args{delay} && ++$i < @$files) {
+            $log->tracef("Sleeping between flies for %d second(s) ...", $args{delay});
+            sleep $args{delay};
+        }
     }
     $envres->as_struct;
 }
