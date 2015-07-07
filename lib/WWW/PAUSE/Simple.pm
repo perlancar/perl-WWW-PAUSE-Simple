@@ -85,6 +85,17 @@ $SPEC{':package'} = {
     summary => 'An API for PAUSE',
 };
 
+sub _parse_release_filename {
+    my $filename = shift;
+    return undef unless
+        $filename =~ /\A
+                      (\w+(?:-\w+)*)
+                      -v?(\d+(?:\.\d+){0,2}(_\d+|-TRIAL)?)
+                      \.$re_archive_ext
+                      \z/ix;
+    return ($1, $2, $3); # (dist, version, is_dev)
+}
+
 sub _common_args {
     my $args = shift;
     (username=>$args->{username}, password=>$args->{password});
@@ -115,6 +126,9 @@ sub _htres2envres {
 $SPEC{upload_files} = {
     v => 1.1,
     summary => 'Upload file(s) to your PAUSE account',
+    args_rels => {
+        choose_one => [qw/delay group_delay/],
+    },
     args => {
         %common_args,
         %files_arg,
@@ -135,6 +149,29 @@ files will alleviate this problem.
 
 _
         },
+        group_delay => {
+            summary => 'Pause a number of seconds between groups of files',
+            schema => ['int*', min=>0],
+            description => <<'_',
+
+As an alternative to the `delay` option, you can also use this option. This will
+group the files to be uploaded by versions and prevent files of the same dist
+and different versions to be uploaded too close to one another, as this might
+cause indexing problem too. For example, suppose you're uploading Foo-1.zip
+Foo-2.zip Foo-3.zip Bar-1.zip Baz-1.zip Baz-2.zip. The files will be uploaded in
+this order:
+
+    upload: Foo-1.zip Bar-1.zip Baz-1.zip
+    group delay
+    upload: Foo-2.zip Baz-2.zip
+    group delay
+    upload: Foo-3.zip
+
+As with the `delay` option, it is recommended that if you upload several files
+at once, you set this option to 2-3 minutes (120-180 seconds).
+
+_
+        },
     },
     features => {dry_run=>1},
 };
@@ -142,14 +179,44 @@ sub upload_files {
     require File::Basename;
 
     my %args = @_;
-    my $files  = $args{files}
+    my $files0 = $args{files}
         or return [400, "Please specify at least one file"];
     my $subdir = $args{subdir} // '';
+
+    # probably group it into versions
+    my @files;
+    if ($args{group_delay}) {
+        my %files_by_dist; # key=distname, val=[file, ...]
+        my $max_num_vers = 0;
+        for my $file (sort @$files0) {
+            my ($dist, $ver, $is_dev) = _parse_release_filename($file);
+            if (!$dist) {
+                ($dist, $ver) = ("", 0);
+            }
+            $files_by_dist{$dist} //= [];
+            push @{ $files_by_dist{$dist} }, $file;
+            $max_num_vers = @{ $files_by_dist{$dist} }
+                if $max_num_vers < @{ $files_by_dist{$dist} };
+        }
+        for my $i (1..$max_num_vers) {
+            for my $dist (keys %files_by_dist) {
+                next unless @{ $files_by_dist{$dist} } >= $i;
+                push @files, {
+                    group => $i,
+                    file => $files_by_dist{$dist}[$i-1],
+                };
+            }
+        }
+    } else {
+        @files = map { +{group=>1, file=>$_} } @$files0;
+    }
 
     my $envres = envresmulti();
 
     my $i = 0;
-    for my $file (@$files) {
+    my $prev_group = 0;
+    for my $ent (@files) {
+        my $file = $ent->{file};
         my $res;
         {
             unless (-f $file) {
@@ -199,9 +266,20 @@ sub upload_files {
         $envres->add_result($res->[0], $res->[1], $res->[3]);
 
       DELAY:
-        if ($args{delay} && ++$i < @$files) {
-            $log->tracef("Sleeping between flies for %d second(s) ...", $args{delay});
-            sleep $args{delay};
+        {
+            # it's the last file, no point in delaying, just exit
+            last if ++$i >= @files;
+            if ($args{delay}) {
+                $log->tracef("Sleeping between files for %d second(s) ...", $args{delay});
+                sleep $args{delay};
+                last;
+            }
+            if ($args{group_delay} &&
+                    $ent->{group} > 1 && $prev_group != $ent->{group}) {
+                $log->tracef("Sleeping between group for %d second(s) ...", $args{group_delay});
+                sleep $args{group_delay};
+                $prev_group = $ent->{group};
+            }
         }
     }
     $envres->as_struct;
@@ -363,15 +441,10 @@ sub list_dists {
             $log->debugf("Skipping %s: under a subdirectory", $file);
             next;
         }
-        unless ($file =~ /\A
-                          (\w+(?:-\w+)*)
-                          -v?(\d+(?:\.\d+){0,2}(_\d+|-TRIAL)?)
-                          \.$re_archive_ext
-                          \z/ix) {
+        my ($dist, $version, $is_dev) = _parse_release_filename($file) or do {
             $log->debugf("Skipping %s: doesn't match release regex", $file);
             next;
-        }
-        my ($dist, $version, $is_dev) = ($1, $2, $3);
+        };
         next if $is_dev && $newest_n;
         push @dists, {
             name => $dist,
