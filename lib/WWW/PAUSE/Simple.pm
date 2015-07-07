@@ -136,6 +136,7 @@ files will alleviate this problem.
 _
         },
     },
+    features => {dry_run=>1},
 };
 sub upload_files {
     require File::Basename;
@@ -154,6 +155,11 @@ sub upload_files {
             unless (-f $file) {
                 $res = [404, "No such file"];
                 last;
+            }
+
+            if ($args{-dry_run}) {
+                $log->tracef("[dry-run] Uploading %s ...", $file);
+                goto DELAY;
             }
 
             $log->tracef("Uploading %s ...", $file);
@@ -192,6 +198,7 @@ sub upload_files {
         $log->tracef("Result of upload: %s", $res);
         $envres->add_result($res->[0], $res->[1], $res->[3]);
 
+      DELAY:
         if ($args{delay} && ++$i < @$files) {
             $log->tracef("Sleeping between flies for %d second(s) ...", $args{delay});
             sleep $args{delay};
