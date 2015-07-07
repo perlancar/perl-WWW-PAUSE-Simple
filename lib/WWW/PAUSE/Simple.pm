@@ -441,10 +441,11 @@ sub list_dists {
             $log->debugf("Skipping %s: under a subdirectory", $file);
             next;
         }
-        my ($dist, $version, $is_dev) = _parse_release_filename($file) or do {
+        my ($dist, $version, $is_dev) = _parse_release_filename($file);
+        unless (defined $dist) {
             $log->debugf("Skipping %s: doesn't match release regex", $file);
             next;
-        };
+        }
         next if $is_dev && $newest_n;
         push @dists, {
             name => $dist,
