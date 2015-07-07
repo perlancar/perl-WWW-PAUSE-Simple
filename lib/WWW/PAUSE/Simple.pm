@@ -112,7 +112,7 @@ sub _htres2envres {
     [$res->code, $res->message, $res->content];
 }
 
-$SPEC{upload_file} = {
+$SPEC{upload_files} = {
     v => 1.1,
     summary => 'Upload file(s) to your PAUSE account',
     args => {
@@ -137,7 +137,7 @@ _
         },
     },
 };
-sub upload_file {
+sub upload_files {
     require File::Basename;
 
     my %args = @_;
@@ -199,6 +199,14 @@ sub upload_file {
     }
     $envres->as_struct;
 }
+
+# old name, deprecated
+{
+    no strict 'refs';
+    *upload_file = \&upload_files;
+}
+$SPEC{upload_file} = { %{ $SPEC{upload_files} } }; # shallow clone
+$SPEC{upload_file}{'x.no_index'} = 1;
 
 $SPEC{list_files} = {
     v => 1.1,
