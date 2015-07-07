@@ -204,9 +204,9 @@ sub upload_files {
 {
     no strict 'refs';
     *upload_file = \&upload_files;
+    $SPEC{upload_file} = { %{ $SPEC{upload_files} } }; # shallow clone
+    $SPEC{upload_file}{'x.no_index'} = 1;
 }
-$SPEC{upload_file} = { %{ $SPEC{upload_files} } }; # shallow clone
-$SPEC{upload_file}{'x.no_index'} = 1;
 
 $SPEC{list_files} = {
     v => 1.1,
