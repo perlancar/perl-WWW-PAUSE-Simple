@@ -1,5 +1,16 @@
 Revision history for WWW-PAUSE-Simple
 
+0.23    2015-07-07 (PERLANCAR)
+
+        - upload: Add option --group-delay.
+
+        - upload: Add --dry_run support.
+
+        - [Incompatible change] Rename upload_file -> upload_files to be
+          consistent with the other functions. Old name is still provided, but
+          deprecated and not documented.
+
+
 0.22    2015-06-14 (PERLANCAR)
 
 	- upload_files: Add option delay.

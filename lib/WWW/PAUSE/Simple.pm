@@ -701,6 +701,8 @@ sub set_account_info {
 1;
 # ABSTRACT:
 
+=for Pod::Coverage ^(upload_file)$
+
 =head1 SYNOPSIS
 
 
