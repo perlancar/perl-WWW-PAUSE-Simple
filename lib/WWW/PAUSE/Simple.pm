@@ -77,6 +77,19 @@ our %file_opt_arg = (
         'x.name.is_plural' => 1,
         pos => 0,
         greedy => 1,
+        tags => ['category:filtering'],
+    },
+);
+
+our %mod_opt_arg = (
+    modules => {
+        summary => 'Module names/wildcard patterns',
+        'summary.alt.plurality.singular' => 'Module name/wildcard pattern',
+        schema  => ['array*', of=>'str*'],
+        'x.name.is_plural' => 1,
+        pos => 0,
+        greedy => 1,
+        tags => ['category:filtering'],
     },
 );
 
@@ -125,7 +138,7 @@ sub _htres2envres {
 
 $SPEC{upload_files} = {
     v => 1.1,
-    summary => 'Upload file(s) to your PAUSE account',
+    summary => 'Upload file(s)',
     args_rels => {
         choose_one => [qw/delay group_delay/],
     },
@@ -295,7 +308,7 @@ sub upload_files {
 
 $SPEC{list_files} = {
     v => 1.1,
-    summary => 'List files on your PAUSE account',
+    summary => 'List files',
     args => {
         %common_args,
         %detail_l_arg,
@@ -387,7 +400,7 @@ sub list_files {
 
 $SPEC{list_dists} = {
     v => 1.1,
-    summary => 'List distributions on your PAUSE account',
+    summary => 'List distributions',
     description => <<'_',
 
 Distribution names will be extracted from tarball/zip filenames.
@@ -501,7 +514,7 @@ sub list_dists {
 
 $SPEC{delete_old_releases} = {
     v => 1.1,
-    summary => 'Delete older versions of distributions on your PAUSE account',
+    summary => 'Delete older versions of distributions',
     description => <<'_',
 
 Developer releases will not be deleted.
@@ -700,6 +713,94 @@ sub set_account_info {
     [501, "Not yet implemented"];
 }
 
+$SPEC{list_modules} = {
+    v => 1.1,
+    summary => 'List modules (permissions)',
+    args => {
+        %common_args,
+        %detail_l_arg,
+        %mod_opt_arg,
+        type => {
+            summary => 'Only list modules matching certain type',
+            schema => 'str*',
+            tags => ['category:filtering'],
+        },
+    },
+};
+sub list_modules {
+    my %args  = @_;
+    require Regexp::Wildcards;
+    require String::Wildcard::Bash;
+
+    my $q = $args{modules} // [];
+
+    my %post_data = (ACTION=>'peek_perms');
+
+    # optimize: the PAUSE server can do SQL LIKE, if there is only a single
+    # module argument we pass it to server to reduce traffic
+    if (@$q == 1) {
+        $post_data{pause99_peek_perms_by} = 'ml';
+        $post_data{pause99_peek_perms_query} =
+            String::Wildcard::Bash::convert_wildcard_to_sql($q->[0]);
+        $post_data{pause99_peek_perms_sub} = 'Submit';
+    }
+
+    my $httpres = _request(
+        %args,
+        post_data => [\%post_data],
+    );
+
+    return _htres2envres($httpres) unless $httpres->is_success;
+
+    # convert wildcard patterns in arguments to regexp
+    for (@$q) {
+        next unless String::Wildcard::Bash::contains_wildcard($_);
+        my $re = Regexp::Wildcards->new(type=>'unix')->convert($_);
+        $re = qr/\A($re)\z/;
+        $_ = $re;
+    }
+
+    return [543, "Can't scrape list of modules from response",
+            $httpres->content]
+        unless $httpres->content =~ m!<tr><td><b>module</b></td>.+?</tr>(.+?)</table>!s;
+    my $str = $1;
+    my @mods;
+  REC:
+    while ($str =~ m!<tr><td><a[^>]+>(.+?)</a></td>\s*<td><a[^>]+>(.+?)</a></td>\s*<td>(.+?)</td>\s*<td>(.+?)</td>\s*</tr>!gs) {
+        my $rec = {module=>$1, userid=>$2, type=>$3, owner=>$4};
+
+        # filter by requested file/wildcard
+      FILTER_QUERY:
+        {
+            last unless @$q > 1;
+            for (@$q) {
+                if (ref($_) eq 'Regexp') {
+                    last FILTER_QUERY if $rec->{module} =~ $_;
+                } else {
+                    last FILTER_QUERY if $rec->{module} eq $_;
+                }
+            }
+            # nothing matches
+            next REC;
+        }
+
+      FILTER_TYPE:
+        if ($args{type}) {
+            next REC unless $rec->{type} eq $args{type};
+        }
+
+        push @mods, $args{detail} ? $rec : $rec->{module};
+    }
+    my %resmeta;
+    if ($args{detail}) {
+        $resmeta{format_options} = {
+            any => {
+                table_column_orders => [[qw/module userid type owner/]],
+            },
+        };
+    }
+    [200, "OK", \@mods, \%resmeta];
+}
 
 1;
 # ABSTRACT:
