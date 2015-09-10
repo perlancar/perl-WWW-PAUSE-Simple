@@ -805,7 +805,7 @@ sub list_modules {
 1;
 # ABSTRACT:
 
-=for Pod::Coverage ^(upload_file)$
+=for Pod::Coverage ^(upload_file|set_account_info|set_password)$
 
 =head1 SYNOPSIS
 

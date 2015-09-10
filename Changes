@@ -1,5 +1,13 @@
 Revision history for WWW-PAUSE-Simple
 
+0.26    2015-09-10 (PERLANCAR)
+
+	- Add function: list_modules to view permissions.
+
+	- Add x.no_index to Rinci metadata of functions that are not yet
+	  implemented.
+
+
 0.25    2015-09-06 (PERLANCAR)
 
 	- No functional changes.
