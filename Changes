@@ -1,5 +1,10 @@
 Revision history for WWW-PAUSE-Simple
 
+0.27    2015-09-10 (PERLANCAR)
+
+	- Handle empty result from peek_perms.
+
+
 0.26    2015-09-10 (PERLANCAR)
 
 	- Add function: list_modules to view permissions.
