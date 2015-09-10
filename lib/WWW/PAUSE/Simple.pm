@@ -760,13 +760,20 @@ sub list_modules {
         $_ = $re;
     }
 
+    my @mods;
+    goto NO_MODS if $httpres->content =~ /No records found/;
     return [543, "Can't scrape list of modules from response",
             $httpres->content]
         unless $httpres->content =~ m!<tr><td><b>module</b></td>.+?</tr>(.+?)</table>!s;
     my $str = $1;
-    my @mods;
+
   REC:
-    while ($str =~ m!<tr><td><a[^>]+>(.+?)</a></td>\s*<td><a[^>]+>(.+?)</a></td>\s*<td>(.+?)</td>\s*<td>(.+?)</td>\s*</tr>!gs) {
+    while ($str =~ m!<tr>
+                     <td><a[^>]+>(.+?)</a></td>\s*
+                     <td><a[^>]+>(.+?)</a></td>\s*
+                     <td>(.+?)</td>\s*
+                     <td>(.+?)</td>\s*
+                     </tr>!gsx) {
         my $rec = {module=>$1, userid=>$2, type=>$3, owner=>$4};
 
         # filter by requested file/wildcard
@@ -791,6 +798,9 @@ sub list_modules {
 
         push @mods, $args{detail} ? $rec : $rec->{module};
     }
+
+  NO_MODS:
+
     my %resmeta;
     if ($args{detail}) {
         $resmeta{format_options} = {
