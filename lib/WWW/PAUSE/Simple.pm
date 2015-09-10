@@ -681,6 +681,7 @@ $SPEC{set_password} = {
     args => {
         %common_args,
     },
+    'x.no_index' => 1,
 };
 sub set_password {
     my %args = @_;
@@ -692,6 +693,7 @@ $SPEC{set_account_info} = {
     args => {
         %common_args,
     },
+    'x.no_index' => 1,
 };
 sub set_account_info {
     my %args = @_;
