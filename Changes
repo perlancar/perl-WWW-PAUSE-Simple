@@ -1,5 +1,13 @@
 Revision history for WWW-PAUSE-Simple
 
+0.28    2015-09-11 (PERLANCAR)
+
+	- No functional changes.
+
+	- [dist] Bump prereq String::Wildcard::Bash to 0.03 (which first
+	  contains convert_wildcard_to_sql).
+
+
 0.27    2015-09-10 (PERLANCAR)
 
 	- Handle empty result from peek_perms.
