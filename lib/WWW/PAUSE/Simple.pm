@@ -93,6 +93,15 @@ our %mod_opt_arg = (
     },
 );
 
+our %protect_files_arg = (
+    protect_files => {
+        summary => 'Protect some files/wildcard patterns from delete/cleanup',
+        schema  => ['array*', of=>'str*'],
+        'x.name.is_plural' => 1,
+        tags => ['category:filtering'],
+    },
+);
+
 $SPEC{':package'} = {
     v => 1.1,
     summary => 'An API for PAUSE',
@@ -531,6 +540,7 @@ _
     args => {
         %common_args,
         %detail_l_arg,
+        %protect_files_arg,
         num_keep => {
             schema => ['int*', min=>1],
             default => 1,
@@ -561,8 +571,12 @@ sub delete_old_releases {
         $file =~ s/\.$re_archive_ext\z//;
         push @to_delete, "$file.*";
     }
-    $res = delete_files(_common_args(\%args),
-                        files=>\@to_delete, -dry_run=>$args{-dry_run});
+    $res = delete_files(
+        _common_args(\%args),
+        protect_files => $args{protect_files},
+        files=>\@to_delete,
+        -dry_run=>$args{-dry_run},
+    );
     return $res if $res->[0] != 200 || $args{-dry_run};
     my $deleted_files = $res->[3]{'func.files'} // [];
     if (@$deleted_files) {
@@ -584,16 +598,20 @@ sub _delete_or_undelete_or_reindex_files {
     my $files0 = $args{files} // [];
     return [400, "Please specify at least one file"] unless @$files0;
 
+    my $protect_files = $args{protect_files} // [];
+
     my @files;
     {
         my $listres;
+        if (grep {String::Wildcard::Bash::contains_wildcard($_)}
+                (@$files0, @$protect_files)) {
+            $listres = list_files(_common_args(\%args));
+            return [500, "Can't list files: $listres->[0] - $listres->[1]"]
+                unless $listres->[0] == 200;
+        }
+
         for my $file (@$files0) {
             if (String::Wildcard::Bash::contains_wildcard($file)) {
-                unless ($listres) {
-                    $listres = list_files(_common_args(\%args));
-                    return [500, "Can't list files: $listres->[0] - $listres->[1]"]
-                        unless $listres->[0] == 200;
-                }
                 my $re = Regexp::Wildcards->new(type=>'unix')->convert($file);
                 $re = qr/\A($re)\z/;
                 for my $f (@{$listres->[2]}) {
@@ -601,6 +619,32 @@ sub _delete_or_undelete_or_reindex_files {
                 }
             } else {
                 push @files, $file;
+            }
+        }
+
+        for my $protect_file (@$protect_files) {
+            if (String::Wildcard::Bash::contains_wildcard($protect_file)) {
+                my $re = Regexp::Wildcards->new(type=>'unix')->convert(
+                    $protect_file);
+                $re = qr/\A($re)\z/;
+                @files = grep {
+                    if ($_ =~ $re) {
+                        $log->debugf("Excluding %s (protected, wildcard %s)",
+                                     $_, $protect_file);
+                        0;
+                    } else {
+                        1;
+                    }
+                } @files;
+            } else {
+                @files = grep {
+                    if ($_ eq $protect_file) {
+                        $log->debugf("Excluding %s (protected)", $_);
+                        0;
+                    } else {
+                        1;
+                    }
+                } @files;
             }
         }
     }
@@ -648,6 +692,7 @@ _
     args => {
         %common_args,
         %files_arg,
+        %protect_files_arg,
     },
     features => {dry_run=>1},
 };
