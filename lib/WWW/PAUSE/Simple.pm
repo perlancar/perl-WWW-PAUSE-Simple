@@ -400,11 +400,8 @@ sub list_files {
     }
     my %resmeta;
     if ($args{detail}) {
-        $resmeta{format_options} = {
-            any => {
-                table_column_orders => [[qw/name size mtime is_scheduled_for_deletion deletion_time/]],
-            },
-        };
+        $resmeta{'table.fields'} =
+            [qw/name size mtime is_scheduled_for_deletion deletion_time/];
     }
     [200, "OK", \@files, \%resmeta];
 }
@@ -514,11 +511,7 @@ sub list_dists {
         $resmeta{"func.old_files"} = \@old_files;
     }
     if ($args{detail}) {
-        $resmeta{format_options} = {
-            any => {
-                table_column_orders => [[qw/name version is_dev_version file/]],
-            },
-        };
+        $resmeta{'table.fields'} = [qw/name version is_dev_version file/];
     }
     [200, "OK", \@dists, \%resmeta];
 }
@@ -850,11 +843,7 @@ sub list_modules {
 
     my %resmeta;
     if ($args{detail}) {
-        $resmeta{format_options} = {
-            any => {
-                table_column_orders => [[qw/module userid type owner/]],
-            },
-        };
+        $resmeta{'table.fields'} =[qw/module userid type owner/];
     }
     [200, "OK", \@mods, \%resmeta];
 }
