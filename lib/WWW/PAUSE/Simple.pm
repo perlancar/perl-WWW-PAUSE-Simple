@@ -162,7 +162,6 @@ $SPEC{upload_files} = {
         delay => {
             summary => 'Pause a number of seconds between files',
             schema => ['duration*'],
-            'x.perl.coerce_to' => 'int(secs)',
             description => <<'_',
 
 If you upload a lot of files (e.g. 7-10 or more) at a time, the PAUSE indexer
@@ -175,7 +174,6 @@ _
         group_delay => {
             summary => 'Pause a number of seconds between groups of files',
             schema => 'duration*',
-            'x.perl.coerce_to' => 'int(secs)',
             description => <<'_',
 
 As an alternative to the `delay` option, you can also use this option. This will
