@@ -285,6 +285,8 @@ sub upload_files {
         $res->[3] //= {};
         $res->[3]{item_id} = $file;
         $log->tracef("Result of upload: %s", $res);
+        $log->warnf("Upload of %s failed: %s - %s", $file, $res->[0], $res->[1])
+            if $res->[0] !~ /^2/;
         $envres->add_result($res->[0], $res->[1], $res->[3]);
 
       DELAY:
