@@ -402,6 +402,8 @@ sub list_files {
     if ($args{detail}) {
         $resmeta{'table.fields'} =
             [qw/name size mtime is_scheduled_for_deletion deletion_time/];
+        $resmeta{'table.field_formats'} =
+            [undef, undef, 'iso8601_datetime', undef, 'iso8601_date'];
     }
     [200, "OK", \@files, \%resmeta];
 }
