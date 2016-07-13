@@ -40,6 +40,20 @@ our %common_args = (
         req     => 1,
         tags    => ['common'],
     },
+    # 2016-07-13 - for a few months now, PAUSE has been giving random 500 errors
+    # when uploading. i'm defaulting to a retries=3
+    retries => {
+        summary => 'Number of retries when received 5xx HTTP error from server',
+        schema  => 'int*',
+        default => 2,
+        tags    => ['common'],
+    },
+    retry_delay => {
+        summary => 'How long to wait before retrying',
+        schema  => 'duration*',
+        default => "3s",
+        tags    => ['common'],
+    },
 );
 
 our %detail_arg = (
@@ -137,7 +151,20 @@ sub _request {
         @{ $args{post_data} });
     $req->authorization_basic($args{username}, $args{password});
 
-    $ua->request($req);
+    my $tries = 0;
+    my $resp;
+  RETRY:
+    while (1) {
+        $resp = $ua->request($req);
+        if ($resp->code =~ /^[5]/ && $args{retries} >= ++$tries) {
+            $log->warnf("Got error %s (%s) from server, retrying (%d/%d) ...",
+                        $resp->code, $resp->message, $tries, $args{retries});
+            sleep $args{retry_delay};
+            next;
+        }
+        last;
+    }
+    $resp;
 }
 
 sub _htres2envres {
@@ -312,6 +339,7 @@ sub upload_files {
 # old name, deprecated
 {
     no strict 'refs';
+    no warnings 'once';
     *upload_file = \&upload_files;
     $SPEC{upload_file} = { %{ $SPEC{upload_files} } }; # shallow clone
     $SPEC{upload_file}{'x.no_index'} = 1;
