@@ -1,5 +1,15 @@
 Revision history for WWW-PAUSE-Simple
 
+0.32    2017-01-03 (PERLANCAR)
+
+	- No functional changes.
+
+	- Remove usage of Version::Util to reduce dependencies.
+
+	- Replace Log::Any::IfLOG with Log::Any to make it easier to
+	  package in Debian.
+
+
 0.31    2016-07-13 (PERLANCAR)
 
 	- Add `retries` and `retry-delay` common options, by default retry twice
