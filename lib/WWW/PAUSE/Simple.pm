@@ -471,7 +471,6 @@ _
 };
 sub list_dists {
     require List::MoreUtils;
-    require Version::Util;
     use experimental 'smartmatch';
 
     my %args  = @_;
@@ -514,7 +513,7 @@ sub list_dists {
         }
         for my $dist (keys %dist_versions) {
             $dist_versions{$dist} = [
-                sort { -Version::Util::cmp_version($a, $b) }
+                sort { version->parse($a) <=> version->parse($b) }
                     @{ $dist_versions{$dist} }];
             if (@{ $dist_versions{$dist} } > $newest_n) {
                 $dist_versions{$dist} = [splice(
