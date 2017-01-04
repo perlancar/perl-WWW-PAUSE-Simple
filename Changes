@@ -1,8 +1,17 @@
 Revision history for WWW-PAUSE-Simple
 
+0.33    2017-01-04 (PERLANCAR)
+
+        - [Bugfix] Logic was reversed when replacing Version::Util with
+          version->parse which caused newer dists to be deleted/cleaned up
+          instead of older ones.
+
+
 0.32    2017-01-03 (PERLANCAR)
 
-	- No functional changes.
+	- UPDATE 2017-01-04: this release contains bug, don't use.
+
+        - No functional changes.
 
 	- Remove usage of Version::Util to reduce dependencies.
 
