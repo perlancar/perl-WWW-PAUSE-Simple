@@ -513,7 +513,7 @@ sub list_dists {
         }
         for my $dist (keys %dist_versions) {
             $dist_versions{$dist} = [
-                sort { version->parse($a) <=> version->parse($b) }
+                sort { version->parse($b) <=> version->parse($a) }
                     @{ $dist_versions{$dist} }];
             if (@{ $dist_versions{$dist} } > $newest_n) {
                 $dist_versions{$dist} = [splice(
