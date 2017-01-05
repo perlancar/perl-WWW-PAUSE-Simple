@@ -29,7 +29,7 @@ our $re_archive_ext = qr/(?:tar|tar\.(?:Z|gz|bz2|xz)|zip|rar)/;
 our %common_args = (
     username => {
         summary => 'PAUSE ID',
-        schema  => ['str*', match=>'\A\w{2,9}\z', max_len=>9],
+        schema  => ['str*', match=>'\A\w{2,9}\z', max_len=>9], # see also: Regexp::Pattern::CPAN
         req     => 1,
         tags    => ['common'],
     },
@@ -51,7 +51,7 @@ our %common_args = (
     retry_delay => {
         summary => 'How long to wait before retrying',
         schema  => 'duration*',
-        default => "3s",
+        default => 3,
         tags    => ['common'],
     },
 );
@@ -887,7 +887,7 @@ sub list_modules {
 
 =head1 DESCRIPTION
 
-This module provides several API functions for performing common tasks on PAUSE.
+This module provides several functions for performing common tasks on PAUSE.
 There is also a CLI script L<pause> distributed separately in L<App::pause>.
 
 
@@ -896,7 +896,7 @@ There is also a CLI script L<pause> distributed separately in L<App::pause>.
 L<CPAN::Uploader> which also does uploading from CLI.
 
 L<WWW::PAUSE::CleanUpHomeDir> which can clean old releases from your PAUSE
-account (CLI example is provided script).
+account (CLI script is provided in example).
 
 L<https://perlancar.wordpress.com/2015/03/25/interacting-with-pause-using-cli/>
 
