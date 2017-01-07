@@ -1,5 +1,3 @@
-Revision history for WWW-PAUSE-Simple
-
 0.33    2017-01-04 (PERLANCAR)
 
         - [Bugfix] Logic was reversed when replacing Version::Util with
