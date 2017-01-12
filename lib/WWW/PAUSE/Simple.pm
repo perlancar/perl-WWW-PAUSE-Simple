@@ -30,12 +30,24 @@ our %common_args = (
     username => {
         summary => 'PAUSE ID',
         schema  => ['str*', match=>'\A\w{2,9}\z', max_len=>9], # see also: Regexp::Pattern::CPAN
+        description => <<'_',
+
+If unset, default value will be searched from `~/.pause`. Encrypted `.pause` is
+not yet supported.
+
+_
         req     => 1,
         tags    => ['common'],
     },
     password => {
         summary => 'PAUSE password',
         schema  => 'str*',
+        description => <<'_',
+
+If unset, default value will be searched from `~/.pause`. Encrypted `.pause` is
+not yet supported.
+
+_
         is_password => 1,
         req     => 1,
         tags    => ['common'],
@@ -142,6 +154,20 @@ sub _request {
 
     my %args = @_;
 
+    # set default for username and password from ~/.pause
+    my $username = $args{username};
+    my $password = $args{password};
+    {
+        last if defined $username && defined $password;
+        my $path = "$ENV{HOME}/.pause";
+        last unless -f $path;
+        open my($fh), "<", $path or last;
+        while (defined(my $line = <$fh>)) {
+            if ($line =~ /^user\s+(.+)/) { $username //= $1 }
+            elsif ($line =~ /^password\s+(.+)/) { $password //= $1 }
+        }
+    }
+
     state $ua = do {
         require LWP::UserAgent;
         LWP::UserAgent->new;
@@ -149,7 +175,7 @@ sub _request {
     my $req = HTTP::Request::Common::POST(
         "https://pause.perl.org/pause/authenquery",
         @{ $args{post_data} });
-    $req->authorization_basic($args{username}, $args{password});
+    $req->authorization_basic($username, $password);
 
     my $tries = 0;
     my $resp;
