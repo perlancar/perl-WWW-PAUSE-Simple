@@ -1,3 +1,15 @@
+0.34    2017-01-12 (PERLANCAR)
+
+	- Search default value of username/password in ~/.pause, rendering
+	  Perinci::CmdLine::pause unnecessary (this is done for easier
+	  generation of Perinci::CmdLine::Inline script).
+
+	- [Removed] Remove deprecated function name 'upload_file' (use
+	  upload_files instead).
+
+	- Several small fixes.
+
+
 0.33    2017-01-04 (PERLANCAR)
 
         - [Bugfix] Logic was reversed when replacing Version::Util with
