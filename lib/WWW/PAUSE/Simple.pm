@@ -336,15 +336,6 @@ sub upload_files {
     $envres->as_struct;
 }
 
-# old name, deprecated
-{
-    no strict 'refs';
-    no warnings 'once';
-    *upload_file = \&upload_files;
-    $SPEC{upload_file} = { %{ $SPEC{upload_files} } }; # shallow clone
-    $SPEC{upload_file}{'x.no_index'} = 1;
-}
-
 $SPEC{list_files} = {
     v => 1.1,
     summary => 'List files',
