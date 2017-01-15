@@ -1,3 +1,8 @@
+0.35    2017-01-15 (PERLANCAR)
+
+	- [Removed feature] Remove group_delay option to simplify things.
+
+
 0.34    2017-01-12 (PERLANCAR)
 
 	- Search default value of username/password in ~/.pause, rendering
