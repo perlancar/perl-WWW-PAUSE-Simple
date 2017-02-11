@@ -800,7 +800,7 @@ sub list_modules {
                      <td><a[^>]+>(.+?)</a></td>\s*
                      <td><a[^>]+>(.+?)</a></td>\s*
                      <td>(.+?)</td>\s*
-                     <td>(.+?)</td>\s*
+                     <td>(.*?)</td>\s*
                      </tr>!gsx) {
         my $rec = {module=>$1, userid=>$2, type=>$3, owner=>$4};
 
