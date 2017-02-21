@@ -1,3 +1,10 @@
+0.37    2017-02-21 (PERLANCAR)
+
+	- No functional changes.
+
+	- [ux] Tweak error messages to be clearer.
+
+
 0.36    2017-02-11 (PERLANCAR)
 
 	- [Bugfix] list_modules: fix scraping regex (owner might be empty).
