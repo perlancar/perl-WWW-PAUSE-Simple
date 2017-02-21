@@ -172,9 +172,8 @@ sub _request {
         require LWP::UserAgent;
         LWP::UserAgent->new;
     };
-    my $req = HTTP::Request::Common::POST(
-        "https://pause.perl.org/pause/authenquery",
-        @{ $args{post_data} });
+    my $url = "https://pause.perl.org/pause/authenquery";
+    my $req = HTTP::Request::Common::POST($url, @{ $args{post_data} });
     $req->authorization_basic($username, $password);
 
     my $tries = 0;
@@ -183,7 +182,8 @@ sub _request {
     while (1) {
         $resp = $ua->request($req);
         if ($resp->code =~ /^[5]/ && $args{retries} >= ++$tries) {
-            $log->warnf("Got error %s (%s) from server, retrying (%d/%d) ...",
+            $log->warnf("Got error %s (%s) from server when POST-ing to %s%s, retrying (%d/%d) ...",
+                        $url, $args{note} ? " ($args{note})" : "",
                         $resp->code, $resp->message, $tries, $args{retries});
             sleep $args{retry_delay};
             next;
@@ -248,12 +248,13 @@ sub upload_files {
             }
 
             if ($args{-dry_run}) {
-                $log->tracef("[dry-run] Uploading %s ...", $file);
+                $log->tracef("[dry-run] (%d/%d) Uploading %s ...", $i+1, ~~@$files, $file);
                 goto DELAY;
             }
 
-            $log->tracef("Uploading %s ...", $file);
+            $log->tracef("(%d/%d) Uploading %s ...", $i+1, ~~@$files, $file);
             my $httpres = _request(
+                note => "upload $file",
                 %args,
                 post_data => [
                     Content_Type => 'form-data',
@@ -329,6 +330,7 @@ sub list_files {
     my $del = $args{del};
 
     my $httpres = _request(
+        note => "list files",
         %args,
         post_data => [{ACTION=>'show_files'}],
     );
@@ -642,6 +644,7 @@ sub _delete_or_undelete_or_reindex_files {
     }
 
     my $httpres = _request(
+        note => "$which files",
         %args,
         post_data => [
             [
@@ -775,6 +778,7 @@ sub list_modules {
 
     my $httpres = _request(
         %args,
+        note => "list modules",
         post_data => [\%post_data],
     );
 
