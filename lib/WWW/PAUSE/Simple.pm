@@ -36,7 +36,6 @@ If unset, default value will be searched from `~/.pause`. Encrypted `.pause` is
 not yet supported.
 
 _
-        req     => 1,
         tags    => ['common'],
     },
     password => {
@@ -49,7 +48,6 @@ not yet supported.
 
 _
         is_password => 1,
-        req     => 1,
         tags    => ['common'],
     },
     # 2016-07-13 - for a few months now, PAUSE has been giving random 500 errors
@@ -165,6 +163,9 @@ sub _request {
         while (defined(my $line = <$fh>)) {
             if ($line =~ /^user\s+(.+)/) { $username //= $1 }
             elsif ($line =~ /^password\s+(.+)/) { $password //= $1 }
+        }
+        unless (defined $username && defined $password) {
+            die "Please specify username/password\n";
         }
     }
 
