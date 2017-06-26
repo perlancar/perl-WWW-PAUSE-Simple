@@ -6,7 +6,7 @@ package WWW::PAUSE::Simple;
 use 5.010001;
 use strict;
 use warnings;
-use Log::Any '$log';
+use Log::ger;
 use Exporter qw(import);
 our @EXPORT_OK = qw(
                        upload_file
@@ -183,9 +183,9 @@ sub _request {
     while (1) {
         $resp = $ua->request($req);
         if ($resp->code =~ /^[5]/ && $args{retries} >= ++$tries) {
-            $log->warnf("Got error %s (%s) from server when POST-ing to %s%s, retrying (%d/%d) ...",
-                        $url, $args{note} ? " ($args{note})" : "",
-                        $resp->code, $resp->message, $tries, $args{retries});
+            log_warn("Got error %s (%s) from server when POST-ing to %s%s, retrying (%d/%d) ...",
+                     $url, $args{note} ? " ($args{note})" : "",
+                     $resp->code, $resp->message, $tries, $args{retries});
             sleep $args{retry_delay};
             next;
         }
@@ -249,11 +249,11 @@ sub upload_files {
             }
 
             if ($args{-dry_run}) {
-                $log->tracef("[dry-run] (%d/%d) Uploading %s ...", $i+1, ~~@$files, $file);
+                log_trace("[dry-run] (%d/%d) Uploading %s ...", $i+1, ~~@$files, $file);
                 goto DELAY;
             }
 
-            $log->tracef("(%d/%d) Uploading %s ...", $i+1, ~~@$files, $file);
+            log_trace("(%d/%d) Uploading %s ...", $i+1, ~~@$files, $file);
             my $httpres = _request(
                 note => "upload $file",
                 %args,
@@ -287,8 +287,8 @@ sub upload_files {
         }
         $res->[3] //= {};
         $res->[3]{item_id} = $file;
-        $log->tracef("Result of upload: %s", $res);
-        $log->warnf("Upload of %s failed: %s - %s", $file, $res->[0], $res->[1])
+        log_trace("Result of upload: %s", $res);
+        log_warn("Upload of %s failed: %s - %s", $file, $res->[0], $res->[1])
             if $res->[0] !~ /^2/;
         $envres->add_result($res->[0], $res->[1], $res->[3]);
 
@@ -297,7 +297,7 @@ sub upload_files {
             # it's the last file, no point in delaying, just exit
             last if ++$i >= @$files;
             if ($args{delay}) {
-                $log->tracef("Sleeping between files for %d second(s) ...", $args{delay});
+                log_trace("Sleeping between files for %d second(s) ...", $args{delay});
                 sleep $args{delay};
                 last;
             }
@@ -450,12 +450,12 @@ sub list_dists {
     my @dists;
     for my $file (@{$res->[2]}) {
         if ($file =~ m!/!) {
-            $log->debugf("Skipping %s: under a subdirectory", $file);
+            log_debug("Skipping %s: under a subdirectory", $file);
             next;
         }
         my ($dist, $version, $is_dev) = _parse_release_filename($file);
         unless (defined $dist) {
-            $log->debugf("Skipping %s: doesn't match release regex", $file);
+            log_debug("Skipping %s: doesn't match release regex", $file);
             next;
         }
         next if $is_dev && $newest_n;
@@ -613,8 +613,8 @@ sub _delete_or_undelete_or_reindex_files {
                 $re = qr/\A($re)\z/;
                 @files = grep {
                     if ($_ =~ $re) {
-                        $log->debugf("Excluding %s (protected, wildcard %s)",
-                                     $_, $protect_file);
+                        log_debug("Excluding %s (protected, wildcard %s)",
+                                  $_, $protect_file);
                         0;
                     } else {
                         1;
@@ -623,7 +623,7 @@ sub _delete_or_undelete_or_reindex_files {
             } else {
                 @files = grep {
                     if ($_ eq $protect_file) {
-                        $log->debugf("Excluding %s (protected)", $_);
+                        log_debug("Excluding %s (protected)", $_);
                         0;
                     } else {
                         1;
@@ -638,10 +638,10 @@ sub _delete_or_undelete_or_reindex_files {
     }
 
     if ($args{-dry_run}) {
-        $log->warnf("[dry-run] %s %s", $which, \@files);
+        log_warn("[dry-run] %s %s", $which, \@files);
         return [200, "OK (dry-run)"];
     } else {
-        $log->infof("%s %s ...", $which, \@files);
+        log_info("%s %s ...", $which, \@files);
     }
 
     my $httpres = _request(
