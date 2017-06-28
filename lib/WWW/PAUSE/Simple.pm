@@ -179,6 +179,7 @@ sub _request {
     $req->authorization_basic($username, $password);
 
     my $tries = 0;
+    my $retries = $args{retries} // 5;
     my $resp;
   RETRY:
     while (1) {
