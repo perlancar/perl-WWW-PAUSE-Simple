@@ -1,6 +1,14 @@
+0.41    2017-06-28 (PERLANCAR)
+
+        - Tone down default retries from 7 to 5.
+
+        - [Bugfix] Retries were not working because we didn't set the default
+          for retries.
+
+
 0.40    2017-06-28 (PERLANCAR)
 
-	- [dist] Re-pass lint-prereqs.
+	- Increase default retries from 2 to 7.
 
 
 0.39    2017-06-26 (PERLANCAR)
