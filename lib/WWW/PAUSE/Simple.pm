@@ -153,6 +153,9 @@ sub _request {
     require HTTP::Request::Common;
 
     my %args = @_;
+    # XXX schema
+    $args{retries} //= 5;
+    $args{retry_delay} //= 3;
 
     # set default for username and password from ~/.pause
     my $username = $args{username};
@@ -180,7 +183,6 @@ sub _request {
     $req->authorization_basic($username, $password);
 
     my $tries = 0;
-    my $retries = $args{retries} // 5;
     my $resp;
   RETRY:
     while (1) {
