@@ -51,11 +51,12 @@ _
         tags    => ['common'],
     },
     # 2016-07-13 - for a few months now, PAUSE has been giving random 500 errors
-    # when uploading. i'm defaulting to a retries=3
+    # when uploading. i'm defaulting to a retries=2.
+    # 2017-06-28 - increase default to retries=7.
     retries => {
         summary => 'Number of retries when received 5xx HTTP error from server',
         schema  => 'int*',
-        default => 2,
+        default => 7,
         tags    => ['common'],
     },
     retry_delay => {
