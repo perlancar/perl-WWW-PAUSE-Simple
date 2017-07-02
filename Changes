@@ -1,3 +1,8 @@
+0.42    2017-07-02 (PERLANCAR)
+
+        - Fix jumbled up error message.
+
+
 0.41    2017-06-28 (PERLANCAR)
 
         - Tone down default retries from 7 to 5.
