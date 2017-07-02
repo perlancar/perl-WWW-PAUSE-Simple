@@ -189,8 +189,10 @@ sub _request {
         $resp = $ua->request($req);
         if ($resp->code =~ /^[5]/ && $args{retries} >= ++$tries) {
             log_warn("Got error %s (%s) from server when POST-ing to %s%s, retrying (%d/%d) ...",
-                     $url, $args{note} ? " ($args{note})" : "",
-                     $resp->code, $resp->message, $tries, $args{retries});
+                     $resp->code, $res->{message},
+                     $url,
+                     $args{note} ? " ($args{note})" : "",
+                     $tries, $args{retries});
             sleep $args{retry_delay};
             next;
         }
