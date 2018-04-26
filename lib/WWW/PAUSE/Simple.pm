@@ -796,15 +796,15 @@ sub list_modules {
     goto NO_MODS if $httpres->content =~ /No records found/;
     return [543, "Can't scrape list of modules from response",
             $httpres->content]
-        unless $httpres->content =~ m!<tr><td><b>module</b></td>.+?</tr>(.+?)</table>!s;
+        unless $httpres->content =~ m!<th[^>]*>module</th>.+?<tbody[^>]*>(.+?)</tbody>!s;
     my $str = $1;
 
   REC:
-    while ($str =~ m!<tr>
-                     <td><a[^>]+>(.+?)</a></td>\s*
-                     <td><a[^>]+>(.+?)</a></td>\s*
-                     <td>(.+?)</td>\s*
-                     <td>(.*?)</td>\s*
+    while ($str =~ m!<tr>\s*
+                     <td\sclass="module"><a[^>]+>(.+?)</a></td>\s*
+                     <td\sclass="userid"><a[^>]+>(.+?)</a></td>\s*
+                     <td\sclass="type">(.+?)</td>\s*
+                     <td\sclass="owner">(.*?)</td>\s*
                      </tr>!gsx) {
         my $rec = {module=>$1, userid=>$2, type=>$3, owner=>$4};
 
