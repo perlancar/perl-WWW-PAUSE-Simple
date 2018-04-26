@@ -645,11 +645,23 @@ sub _delete_or_undelete_or_reindex_files {
         log_info("%s %s ...", $which, \@files);
     }
 
+    my $action;
+    if ($which eq 'delete') {
+        $action = 'delete_files';
+    } elsif ($which eq 'undelete') {
+        $action = 'delete_files';
+    } elsif ($which eq 'reindex') {
+        $action = 'reindex';
+    } else {
+        die "BUG: undefined action";
+    }
+
     my $httpres = _request(
         note => "$which files",
         %args,
         post_data => [
             [
+                ACTION => $action,
                 HIDDENNAME                => $args{username},
                 ($which eq 'delete'   ? (SUBMIT_pause99_delete_files_delete   => "Delete"  ) : ()),
                 ($which eq 'undelete' ? (SUBMIT_pause99_delete_files_undelete => "Undelete") : ()),
