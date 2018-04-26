@@ -1,3 +1,10 @@
+0.441   2018-04-26 (PERLANCAR)
+
+	- [Bugfix] Previous release didn't fix the broken
+	  delete/undelete/reindex, we now need to pass ACTION=... query
+	  parameter.
+
+
 0.440   2018-04-26 (PERLANCAR)
 
 	- Update to server changes: Module listing format.
