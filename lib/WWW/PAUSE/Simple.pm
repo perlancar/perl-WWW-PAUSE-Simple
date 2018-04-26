@@ -347,20 +347,22 @@ sub list_files {
     return _htres2envres($httpres) unless $httpres->is_success;
     return [543, "Can't scrape list of files from response",
             $httpres->content]
-        unless $httpres->content =~ m!<h3>Files in directory.+</h3><pre>(.+)</pre>!s;
+        unless $httpres->content =~ m!<h3>Files in directory.+<tbody[^>]*>(.+)</tbody>!s;
     my $str = $1;
     my @files;
   REC:
-    while ($str =~ m!(?:\A |<br/> )(.+?)\s+(\d+)\s+(Scheduled for deletion \(due at )?(\w+, \d\d \w+ \d{4} \d\d:\d\d:\d\d GMT)!g) {
-
-        my $time = Date::Parse::str2time($4, "UTC");
-
+    while ($str =~ m!<td class="file">(.+?)</td>\s+<td class="size">(.+?)</td>\s+<td class="modified">(.+?)</td>!gs) {
         my $rec = {
-            name  => $1,
-            size  => $2,
-            is_scheduled_for_deletion => $3 ? 1:0,
+            name => $1,
+            size => $2,
         };
-        if ($3) {
+        my $time0 = $3;
+        if ($time0 =~ s/^Scheduled for deletion \(due at //) {
+            $rec->{is_scheduled_for_deletion} = 1;
+            $time0 =~ s/\)$//;
+        }
+        my $time = Date::Parse::str2time($time0, "UTC");
+        if ($rec->{is_scheduled_for_deletion}) {
             $rec->{deletion_time} = $time;
         } else {
             $rec->{mtime} = $time;
@@ -392,7 +394,7 @@ sub list_files {
         $resmeta{'table.fields'} =
             [qw/name size mtime is_scheduled_for_deletion deletion_time/];
         $resmeta{'table.field_formats'} =
-            [undef, undef, 'iso8601_datetime', undef, 'iso8601_date'];
+            [undef, undef, 'iso8601_datetime', undef, 'iso8601_datetime'];
     }
     [200, "OK", \@files, \%resmeta];
 }
