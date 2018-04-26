@@ -7,6 +7,7 @@ use 5.010001;
 use strict;
 use warnings;
 use Log::ger;
+
 use Exporter qw(import);
 our @EXPORT_OK = qw(
                        upload_file
@@ -281,16 +282,7 @@ sub upload_files {
                 $res = _htres2envres($httpres);
                 last;
             }
-            if ($httpres->content !~ m!<h3>Submitting query</h3>\s*<p>(.+?)</p>!s) {
-                $res = [543, "Can't scrape upload status from response", $httpres->content];
-                last;
-            }
-            my $str = $1;
-            if ($str =~ /Query succeeded/) {
-                $res = [200, "OK", undef, {"func.raw_status" => $str}];
-            } else {
-                $res = [500, "Failed: $str"];
-            }
+            $res = [200, "OK"];
         }
         $res->[3] //= {};
         $res->[3]{item_id} = $file;
