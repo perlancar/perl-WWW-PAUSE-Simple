@@ -660,8 +660,6 @@ sub _delete_or_undelete_or_reindex_files {
         ],
     );
     return _htres2envres($httpres) unless $httpres->is_success;
-    return [543, "Can't scrape $which status from response", $httpres->content]
-        unless $httpres->content =~ m!<h3>Files in directory!s;
     [200,"OK", undef, {'func.files'=>\@files}];
 }
 
