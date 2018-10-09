@@ -873,6 +873,9 @@ L<CPAN::Uploader> which also does uploading from CLI.
 L<WWW::PAUSE::CleanUpHomeDir> which can clean old releases from your PAUSE
 account (CLI script is provided in example).
 
+L<App::PAUSE::cleanup> which also cleans old releases from your PAUSE account,
+with CLI included L<pause-cleanup>.
+
 L<https://perlancar.wordpress.com/2015/03/25/interacting-with-pause-using-cli/>
 
 =cut
