@@ -318,6 +318,24 @@ $SPEC{list_files} = {
             schema => 'bool',
             tags => ['category:filtering'],
         },
+        size_min => {
+            #schema => 'filesize*',
+            schema => 'uint*',
+            tags => ['category:filtering'],
+        },
+        size_max => {
+            #schema => 'filesize*',
+            schema => 'uint*',
+            tags => ['category:filtering'],
+        },
+        mtime_min => {
+            schema => ['date*', 'x.perl.coerce_to'=>'float(epoch)'],
+            tags => ['category:filtering'],
+        },
+        mtime_max => {
+            schema => ['date*', 'x.perl.coerce_to'=>'float(epoch)'],
+            tags => ['category:filtering'],
+        },
     },
 };
 sub list_files {
@@ -382,8 +400,28 @@ sub list_files {
             # nothing matches
             next REC;
         }
-        if (defined $del) {
-            next REC if $del xor $rec->{is_scheduled_for_deletion};
+
+      FILTER_SIZE:
+        {
+            next REC if defined $args{size_min} &&
+                $rec->{size} < $args{size_min};
+            next REC if defined $args{size_max} &&
+                $rec->{size} > $args{size_max};
+        }
+
+      FILTER_MTIME:
+        {
+            next REC if defined $args{mtime_min} &&
+                $rec->{mtime} < $args{mtime_min};
+            next REC if defined $args{mtime_max} &&
+                $rec->{mtime} > $args{mtime_max};
+        }
+
+      FILTER_DEL:
+        {
+            if (defined $del) {
+                next REC if $del xor $rec->{is_scheduled_for_deletion};
+            }
         }
 
         push @files, $args{detail} ? $rec : $rec->{name};
