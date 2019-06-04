@@ -55,16 +55,34 @@ _
     # when uploading. i'm defaulting to a retries=2.
     # 2017-06-28 - increase default to retries=7.
     # 2017-06-28 - tone down retries to 5.
+    # 2019-06-05 - now uses exponential backoff, increase retries to 35 to try
+    #              for a little over a day
     retries => {
         summary => 'Number of retries when received 5xx HTTP error from server',
         schema  => 'int*',
-        default => 5,
+        default => 35,
         tags    => ['common'],
     },
     retry_delay => {
         summary => 'How long to wait before retrying',
         schema  => 'duration*',
         default => 3,
+        tags    => ['common', 'deprecated'],
+        description => <<'_',
+
+This setting is now deprecated. Will use a constant backoff strategy of delaying
+this many seconds. The default (when this setting is not specified) is now to
+use an exponential backoff strategy of delaying 3, 6, 12, 24, ..., 3600, 3600,
+... seconds. The default `retries` of 35 makes this strategy retries for a
+little over a day (88941 seconds). The terminal delay setting (default 3600
+seconds) can be set via `retry_max_delay`.
+
+_
+    },
+    retry_max_delay => {
+        summary => 'How long to wait at most before retrying',
+        schema  => 'duration*',
+        default => 3600,
         tags    => ['common'],
     },
 );
@@ -153,10 +171,34 @@ sub _common_args {
 sub _request {
     require HTTP::Request::Common;
 
+    state $deprecation_warned = 0;
+
     my %args = @_;
     # XXX schema
-    $args{retries} //= 5;
-    $args{retry_delay} //= 3;
+    $args{retries} //= 35;
+    if (defined $args{retry_delay}) {
+        warn "retry_delay setting is deprecated, please use retry_max_delay from now on\n"
+            unless $deprecation_warned++;
+    } else {
+        $args{retry_delay} = 3;
+    }
+    $args{retry_max_delay} //= 3600;
+
+    my $strategy;
+    if (defined $args{retry_delay}) {
+        require Algorithm::Backoff::Constant;
+        $strategy = Algorithm::Backoff::Constant->new(
+            max_attempts  => $args{retries},
+            delay         => $args{retry_delay},
+        );
+    } else {
+        require Algorithm::Backoff::Exponential;
+        $strategy = Algorithm::Backoff::Exponential->new(
+            max_attempts  => $args{retries},
+            initial_delay => 3,
+            max_delay     => $args{retry_max_delay},
+        );
+    }
 
     # set default for username and password from ~/.pause
     my $username = $args{username};
@@ -188,13 +230,15 @@ sub _request {
   RETRY:
     while (1) {
         $resp = $ua->request($req);
-        if ($resp->code =~ /^[5]/ && $args{retries} >= ++$tries) {
-            log_warn("Got error %s (%s) from server when POST-ing to %s%s, retrying (%d/%d) ...",
+        if ($resp->code =~ /^[5]/) {
+            $tries++;
+            my $delay = $strategy->failure;
+            log_warn("Got error %s (%s) from server when POST-ing to %s%s, retrying (%d/%d) in %d second(s) ...",
                      $resp->code, $resp->message,
                      $url,
                      $args{note} ? " ($args{note})" : "",
-                     $tries, $args{retries});
-            sleep $args{retry_delay};
+                     $tries, $args{retries}, $delay);
+            sleep $delay;
             next;
         }
         last;
