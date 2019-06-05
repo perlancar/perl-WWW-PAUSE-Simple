@@ -64,9 +64,8 @@ _
         tags    => ['common'],
     },
     retry_delay => {
-        summary => 'How long to wait before retrying',
+        summary => 'How long to wait before retrying (deprecated)',
         schema  => 'duration*',
-        default => 3,
         tags    => ['common', 'deprecated'],
         description => <<'_',
 
