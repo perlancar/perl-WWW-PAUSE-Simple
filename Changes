@@ -1,3 +1,9 @@
+0.445   2019-11-14  Released-By: PERLANCAR; Urgency: medium
+
+	- Remove options: retry_delay, retry_max_delay; tune down default
+	  retries from 35 to 5.
+
+
 0.444   2019-06-05  Released-By: PERLANCAR
 
 	- Use exponential backoff strategy for retries, deprecate
