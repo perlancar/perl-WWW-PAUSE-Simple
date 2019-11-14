@@ -59,7 +59,7 @@ _
     #              for a little over a day
     # 2019-11-14 - PAUSE is now ok, tune down retries to 5
     retries => {
-        summary => 'Number of retries when received [45]xx HTTP error from server',
+        summary => 'Number of retries when received 5xx HTTP error from server',
         description => <<'_',
 
 The retry uses an exponential backoff strategy of delaying 3, 6, 12, 24, ...,
