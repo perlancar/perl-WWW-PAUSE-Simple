@@ -1,6 +1,8 @@
 package WWW::PAUSE::Simple;
 
+# AUTHORITY
 # DATE
+# DIST
 # VERSION
 
 use 5.010001;
@@ -24,8 +26,20 @@ our @EXPORT_OK = qw(
 use Perinci::Object;
 
 our %SPEC;
+my $access_log = Log::ger->get_logger(category => "access");
 
 our $re_archive_ext = qr/(?:tar|tar\.(?:Z|gz|bz2|xz)|zip|rar)/;
+
+sub _access_log {
+    my ($args, $action, $obj, $description) = @_;
+    $access_log->info({
+        time => time(),
+        username => $args->{username},
+        action => $action,
+        object => $obj,
+        description => $description,
+    });
+}
 
 our %common_args = (
     username => {
@@ -262,6 +276,7 @@ sub upload_files {
     my $i = 0;
     my $prev_group = 0;
     for my $file (@$files) {
+        my $basename = File::Basename::basename($file);
         my $res;
         {
             unless (-f $file) {
@@ -283,7 +298,7 @@ sub upload_files {
                     Content => {
                         HIDDENNAME                        => $args{username},
                         CAN_MULTIPART                     => 0,
-                        pause99_add_uri_upload            => File::Basename::basename($file),
+                        pause99_add_uri_upload            => $basename,
                         SUBMIT_pause99_add_uri_httpupload => " Upload this file from my disk ",
                         pause99_add_uri_uri               => "",
                         pause99_add_uri_httpupload        => [$file],
@@ -300,8 +315,11 @@ sub upload_files {
         $res->[3] //= {};
         $res->[3]{item_id} = $file;
         log_trace("Result of upload: %s", $res);
-        log_warn("Upload of %s failed: %s - %s", $file, $res->[0], $res->[1])
-            if $res->[0] !~ /^2/;
+        if ($res->[0] =~ /^2/) {
+            _access_log(\%args, upload => {name=>$basename, size=>(-s $file), subdir=>$subdir});
+        } else {
+            log_warn("Upload of %s failed: %s - %s", $file, $res->[0], $res->[1])
+        }
         $envres->add_result($res->[0], $res->[1], $res->[3]);
 
       DELAY:
@@ -723,6 +741,7 @@ sub _delete_or_undelete_or_reindex_files {
         ],
     );
     return _htres2envres($httpres) unless $httpres->is_success;
+    _access_log(\%args, $which => {files=>\@files}) if $which =~ /delete|undelete/;
     [200,"OK", undef, {'func.files'=>\@files}];
 }
 
