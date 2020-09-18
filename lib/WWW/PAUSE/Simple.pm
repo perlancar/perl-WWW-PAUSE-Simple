@@ -492,12 +492,19 @@ _
         },
         newest_n => {
             schema => ['int*', min=>1],
-            summary => 'Only show this number of newest non-dev versions',
+            summary => 'Only show this number of newest versions',
             description => <<'_',
 
 Dev versions will be skipped.
 
 _
+        },
+        include_nondev => {
+            schema => 'bool*',
+            default => 1,
+        },
+        include_dev => {
+            schema => 'bool*',
         },
     },
 };
@@ -516,6 +523,8 @@ sub list_dists {
     } elsif ($args{newest}) {
         $newest_n = 1;
     }
+    my $include_dev = $args{include_dev};
+    my $include_nondev = $args{include_nondev} // 1;
 
     my @dists;
     for my $file (@{$res->[2]}) {
@@ -523,17 +532,18 @@ sub list_dists {
             log_debug("Skipping %s: under a subdirectory", $file);
             next;
         }
-        my ($dist, $version, $is_dev) = _parse_release_filename($file);
+        my ($dist, $version0, $dev) = _parse_release_filename($file);
         unless (defined $dist) {
             log_debug("Skipping %s: doesn't match release regex", $file);
             next;
         }
-        next if $is_dev && $newest_n;
+        next if $newest_n && (($dev && !$include_dev) || (!$dev && !$include_nondev));
+        (my $version = $version0) =~ s/-TRIAL$/_001/;
         push @dists, {
             name => $dist,
             file => $file,
+            version0 => $version0,
             version => $version,
-            is_dev_version => $is_dev ? 1:0,
         };
     }
 
@@ -582,19 +592,29 @@ $SPEC{delete_old_releases} = {
     summary => 'Delete older versions of distributions',
     description => <<'_',
 
-Developer releases will not be deleted.
+Currently does not look for releases in subdirectories.
 
-To delete developer releases, you can use `delete_files` (rm), e.g. from the
-command line:
+By default does not include developer (trial) releases. To include that, use
+`--include-dev`.
 
-    % pause rm 'My-Module-*TRIAL*'; # delete a dist's trial releases
-    % pause rm '*TRIAL*' '*_*'; # delete all files containing TRIAL or underscore
+To only cleanup developer deleases, you can use `--exclude-dev` and
+`--include-nondev`.
 
 _
     args => {
         %common_args,
         %detail_l_arg,
         %protect_files_arg,
+        include_nondev => {
+            summary => 'Whether to include cleaning up non-dev releases',
+            schema => 'bool*',
+            default => 1,
+        },
+        include_dev => {
+            summary => 'Whether to include cleaning up non-dev releases',
+            schema => 'bool*',
+            default => 0,
+        },
         num_keep => {
             schema => ['int*', min=>1],
             default => 1,
@@ -613,7 +633,7 @@ _
 sub delete_old_releases {
     my %args = @_;
 
-    my $res = list_dists(_common_args(\%args), newest_n=>$args{num_keep}//1);
+    my $res = list_dists(_common_args(\%args), newest_n=>$args{num_keep}//1, include_dev=>$args{include_dev}, include_nondev=>$args{include_nondev});
     return [500, "Can't list dists: $res->[0] - $res->[1]"] if $res->[0] != 200;
     my $old_files = $res->[3]{'func.old_files'};
 
