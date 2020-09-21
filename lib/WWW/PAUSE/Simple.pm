@@ -597,8 +597,8 @@ Currently does not look for releases in subdirectories.
 By default does not include developer (trial) releases. To include that, use
 `--include-dev`.
 
-To only cleanup developer deleases, you can use `--exclude-dev` and
-`--include-nondev`.
+To only cleanup developer releases, you can use `--include-dev` and
+`--exclude-nondev`.
 
 _
     args => {
