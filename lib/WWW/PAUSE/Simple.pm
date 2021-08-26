@@ -26,7 +26,7 @@ our @EXPORT_OK = qw(
 # VERSION
 
 our %SPEC;
-my $access_log = Log::ger->get_logger(category => "access");
+my $access_log = Log::ger->get_logger(category => "_access");
 
 our $re_archive_ext = qr/(?:tar|tar\.(?:Z|gz|bz2|xz)|zip|rar)/;
 
