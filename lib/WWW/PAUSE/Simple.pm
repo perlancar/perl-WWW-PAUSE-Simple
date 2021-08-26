@@ -1,14 +1,11 @@
 package WWW::PAUSE::Simple;
 
-# AUTHORITY
-# DATE
-# DIST
-# VERSION
-
 use 5.010001;
 use strict;
 use warnings;
 use Log::ger;
+
+use Perinci::Object;
 
 use Exporter qw(import);
 our @EXPORT_OK = qw(
@@ -23,7 +20,10 @@ our @EXPORT_OK = qw(
                        set_account_info
                );
 
-use Perinci::Object;
+# AUTHORITY
+# DATE
+# DIST
+# VERSION
 
 our %SPEC;
 my $access_log = Log::ger->get_logger(category => "access");
@@ -153,6 +153,7 @@ $SPEC{':package'} = {
 
 sub _parse_release_filename {
     my $filename = shift;
+    ## no critic: Subroutines::ProhibitExplicitReturnUndef
     return undef unless
         $filename =~ /\A
                       (\w+(?:-\w+)*)
