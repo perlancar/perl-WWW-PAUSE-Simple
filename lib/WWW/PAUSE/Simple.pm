@@ -146,6 +146,34 @@ our %protect_files_arg = (
     },
 );
 
+our %argspecsopt_filter_dev = (
+    include_nondev => {
+        summary => 'Whether to include cleaning up non-dev releases',
+        schema => 'bool*',
+        default => 1,
+    },
+    include_dev => {
+        summary => 'Whether to include cleaning up non-dev releases',
+        schema => 'bool*',
+        default => 0,
+    },
+);
+
+our %argspecsopt_filter_dists = (
+    include_dists => {
+        summary => 'Only include specified distributions',
+        "x.name.is_plural" => 1,
+        "x.name.singular" => "include_dist",
+        schema => ['array*', of=>'str*'], # XXX perl::distname
+    },
+    exclude_dists => {
+        summary => 'Exclude specified distributions',
+        "x.name.is_plural" => 1,
+        "x.name.singular" => "exclude_dist",
+        schema => ['array*', of=>'str*'], # XXX perl::distname
+    },
+);
+
 $SPEC{':package'} = {
     v => 1.1,
     summary => 'An API for PAUSE',
@@ -500,13 +528,8 @@ Dev versions will be skipped.
 
 _
         },
-        include_nondev => {
-            schema => 'bool*',
-            default => 1,
-        },
-        include_dev => {
-            schema => 'bool*',
-        },
+        %argspecsopt_filter_dists,
+        %argspecsopt_filter_dev,
     },
 };
 sub list_dists {
@@ -527,55 +550,66 @@ sub list_dists {
     my $include_dev = $args{include_dev};
     my $include_nondev = $args{include_nondev} // 1;
 
-    my @dists;
+    my @distrecs;
     for my $file (@{$res->[2]}) {
         if ($file =~ m!/!) {
             log_debug("Skipping %s: under a subdirectory", $file);
             next;
         }
-        my ($dist, $version0, $dev) = _parse_release_filename($file);
-        unless (defined $dist) {
+        my ($distname, $version0, $dev) = _parse_release_filename($file);
+        unless (defined $distname) {
             log_debug("Skipping %s: doesn't match release regex", $file);
             next;
         }
+        if ($args{include_dists} && @{$args{include_dists}} && !(grep {$distname eq $_} @{$args{include_dists}})) {
+            log_trace("Skipping %s: Distribution %s not in include_dists", $file, $distname);
+            next;
+        }
+        if ($args{exclude_dists} && @{$args{exclude_dists}} &&  (grep {$distname eq $_} @{$args{exclude_dists}})) {
+            log_trace("Skipping %s: Distribution %s in exclude_dists", $file, $distname);
+            next;
+        }
+
         next if $newest_n && (($dev && !$include_dev) || (!$dev && !$include_nondev));
         (my $version = $version0) =~ s/-TRIAL$/_001/;
-        push @dists, {
-            name => $dist,
+        push @distrecs, {
+            name => $distname,
             file => $file,
             version0 => $version0,
             version => $version,
         };
-    }
+    } # for my $file
 
     my @old_files;
     if ($newest_n) {
         my %dist_versions;
-        for my $dist (@dists) {
-            push @{ $dist_versions{$dist->{name}} }, $dist->{version};
+        for my $distrec (@distrecs) {
+            push @{ $dist_versions{$distrec->{name}} }, $distrec->{version};
         }
-        for my $dist (keys %dist_versions) {
-            $dist_versions{$dist} = [
+        for my $distname (keys %dist_versions) {
+            $dist_versions{$distname} = [
                 sort { version->parse($b) <=> version->parse($a) }
-                    @{ $dist_versions{$dist} }];
-            if (@{ $dist_versions{$dist} } > $newest_n) {
-                $dist_versions{$dist} = [splice(
-                    @{ $dist_versions{$dist} }, 0, $newest_n)];
+                    @{ $dist_versions{$distname} }];
+            if (@{ $dist_versions{$distname} } > $newest_n) {
+                $dist_versions{$distname} = [splice(
+                    @{ $dist_versions{$distname} }, 0, $newest_n)];
             }
         }
-        my @old_dists = @dists;
-        @dists = ();
-        for my $dist (@old_dists) {
-            if ($dist->{version} ~~ @{ $dist_versions{$dist->{name}} }) {
-                push @dists, $dist;
+        my @old_distrecs = @distrecs;
+        @distrecs = ();
+        for my $distrec (@old_distrecs) {
+            log_trace "Distribution %s: Keeping these newest versions: %s", $distrec->{name}, $dist_versions{$distrec->{name}};
+            if ($distrec->{version} ~~ @{ $dist_versions{$distrec->{name}} }) {
+                push @distrecs, $distrec;
             } else {
-                push @old_files, $dist->{file};
+                push @old_files, $distrec->{file};
             }
         }
     }
 
+    my @distnames;
     unless ($args{detail}) {
-        @dists = List::MoreUtils::uniq(map { $_->{name} } @dists);
+        @distnames = List::MoreUtils::uniq(map { $_->{name} } @distrecs);
     }
 
     my %resmeta;
@@ -585,7 +619,7 @@ sub list_dists {
     if ($args{detail}) {
         $resmeta{'table.fields'} = [qw/name version is_dev_version file/];
     }
-    [200, "OK", \@dists, \%resmeta];
+    [200, "OK", ($args{detail} ? \@distrecs : \@distnames), \%resmeta];
 }
 
 $SPEC{delete_old_releases} = {
@@ -606,16 +640,8 @@ _
         %common_args,
         %detail_l_arg,
         %protect_files_arg,
-        include_nondev => {
-            summary => 'Whether to include cleaning up non-dev releases',
-            schema => 'bool*',
-            default => 1,
-        },
-        include_dev => {
-            summary => 'Whether to include cleaning up non-dev releases',
-            schema => 'bool*',
-            default => 0,
-        },
+        %argspecsopt_filter_dists,
+        %argspecsopt_filter_dev,
         num_keep => {
             schema => ['int*', min=>1],
             default => 1,
@@ -634,7 +660,14 @@ _
 sub delete_old_releases {
     my %args = @_;
 
-    my $res = list_dists(_common_args(\%args), newest_n=>$args{num_keep}//1, include_dev=>$args{include_dev}, include_nondev=>$args{include_nondev});
+    my $res = list_dists(
+        _common_args(\%args),
+        newest_n=>$args{num_keep}//1,
+        include_dev=>$args{include_dev},
+        include_nondev=>$args{include_nondev},
+        include_dists=>$args{include_dists},
+        exclude_dists=>$args{exclude_dists},
+    );
     return [500, "Can't list dists: $res->[0] - $res->[1]"] if $res->[0] != 200;
     my $old_files = $res->[3]{'func.old_files'};
 
