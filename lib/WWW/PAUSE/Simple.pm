@@ -597,8 +597,10 @@ sub list_dists {
         }
         my @old_distrecs = @distrecs;
         @distrecs = ();
+        my %dist_seen;
         for my $distrec (@old_distrecs) {
-            log_trace "Distribution %s: Keeping these newest versions: %s", $distrec->{name}, $dist_versions{$distrec->{name}};
+            log_trace "Distribution %s: Keeping these newest versions: %s", $distrec->{name}, $dist_versions{$distrec->{name}}
+                unless $dist_seen{$distrec->{name}};
             if ($distrec->{version} ~~ @{ $dist_versions{$distrec->{name}} }) {
                 push @distrecs, $distrec;
             } else {
