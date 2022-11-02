@@ -185,7 +185,7 @@ sub _parse_release_filename {
     return undef unless
         $filename =~ /\A
                       (\w+(?:-\w+)*)
-                      -v?(\d+(?:\.\d+){0,2}(_\d+|-TRIAL)?)
+                      -v?(\d+(?:\.\d+){0,}(_\d+|-TRIAL)?)
                       \.$re_archive_ext
                       \z/ix;
     return ($1, $2, $3); # (dist, version, is_dev)
