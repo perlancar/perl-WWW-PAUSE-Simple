@@ -728,20 +728,18 @@ sub _delete_or_undelete_or_reindex_files {
         if (grep {String::Wildcard::Bash::contains_wildcard($_)}
             (@$files0, @$protect_files)) {
 
-            if (grep {$_ eq '*'} @$files0) {
-                if ($which eq 'delete') {
-                    log_warn "Please make sure that you really want to delete ALL files! ".
-                        "Delaying 10s to give you chance to cancel (Ctrl-C on the terminal) ...";
-                    sleep 10;
-                    log_warn "Continuing ...";
-                } elsif ($which eq 'reindex') {
-                    log_warn "Please make sure that you really want to reindex ALL files! ".
-                        "If you want to fix certain distributions that are missing from the index, ".
-                        "you should reindex just those distribution files. ".
-                        "Delaying 10s to give you chance to cancel (Ctrl-C on the terminal) ...";
-                    sleep 10;
-                    log_warn "Continuing ...";
-                }
+            if ($which eq 'delete' && (grep {$_ =~ /\A\*\.?/} @$files0)) {
+                log_warn "Please make sure that you really want to delete ALL/many files using the '*' wildcard! ".
+                    "Delaying 10s to give you chance to cancel (Ctrl-C on the terminal) ...";
+                sleep 10;
+                log_warn "Continuing ...";
+            } elsif ($which eq 'reindex' && (grep {$_ =~ /\A\*(z|\.?gz|\.?tar\.gz)?\z/} @$files0)) {
+                log_warn "Please make sure that you really want to reindex ALL files or ALL tarballs! ".
+                    "If you want to fix certain distributions that are missing from the index, ".
+                    "you should reindex just those distribution files. ".
+                    "Delaying 10s to give you chance to cancel (Ctrl-C on the terminal) ...";
+                sleep 10;
+                log_warn "Continuing ...";
             }
 
             $listres = list_files(_common_args(\%args));
