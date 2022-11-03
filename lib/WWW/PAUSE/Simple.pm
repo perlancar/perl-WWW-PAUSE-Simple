@@ -705,6 +705,18 @@ sub _delete_or_undelete_or_reindex_files {
     my $which = shift;
     my %args = @_;
 
+    # to supply to pause server
+    my $action;
+    if ($which eq 'delete') {
+        $action = 'delete_files';
+    } elsif ($which eq 'undelete') {
+        $action = 'delete_files'; # sic
+    } elsif ($which eq 'reindex') {
+        $action = 'reindex';
+    } else {
+        die "BUG: undefined action";
+    }
+
     my $files0 = $args{files} // [];
     return [400, "Please specify at least one file"] unless @$files0;
 
@@ -714,7 +726,24 @@ sub _delete_or_undelete_or_reindex_files {
     {
         my $listres;
         if (grep {String::Wildcard::Bash::contains_wildcard($_)}
-                (@$files0, @$protect_files)) {
+            (@$files0, @$protect_files)) {
+
+            if (grep {$_ eq '*'} @$files0) {
+                if ($which eq 'delete') {
+                    log_warn "Please make sure that you really want to delete ALL files! ".
+                        "Delaying 10s to give you chance to cancel (Ctrl-C on the terminal) ...";
+                    sleep 10;
+                    log_warn "Continuing ...";
+                } elsif ($which eq 'reindex') {
+                    log_warn "Please make sure that you really want to reindex ALL files! ".
+                        "If you want to fix certain distributions that are missing from the index, ".
+                        "you should reindex just those distribution files. ".
+                        "Delaying 10s to give you chance to cancel (Ctrl-C on the terminal) ...";
+                    sleep 10;
+                    log_warn "Continuing ...";
+                }
+            }
+
             $listres = list_files(_common_args(\%args));
             return [500, "Can't list files: $listres->[0] - $listres->[1]"]
                 unless $listres->[0] == 200;
@@ -768,17 +797,6 @@ sub _delete_or_undelete_or_reindex_files {
         return [200, "OK (dry-run)"];
     } else {
         log_info("%s %s ...", $which, \@files);
-    }
-
-    my $action;
-    if ($which eq 'delete') {
-        $action = 'delete_files';
-    } elsif ($which eq 'undelete') {
-        $action = 'delete_files';
-    } elsif ($which eq 'reindex') {
-        $action = 'reindex';
-    } else {
-        die "BUG: undefined action";
     }
 
     my $httpres = _request(
