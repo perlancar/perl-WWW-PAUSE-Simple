@@ -1,3 +1,8 @@
+0.455   2022-11-03  Released-By: PERLANCAR; Urgency: medium
+
+        - Tweak regex for warning.
+
+
 0.454   2022-11-03  Released-By: PERLANCAR; Urgency: medium
 
         - [ux] Give warning and delay when we want to 'delete *' and
