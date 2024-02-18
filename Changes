@@ -1,4 +1,4 @@
-0.458   2024-02-18  Released-By: PERLANCAR; Urgency: medium; Personal-Note: PAUSE broke my daily release streaks, might as well drop out of all daily streak challenge
+0.458   2024-02-18  Released-By: PERLANCAR; Urgency: medium; Personal-Note: PAUSE broke my daily release streaks, might as well drop out of all daily streak challenges
 
         - [bugfix] Derp, forgot to provide arguments for log_warn().
 
