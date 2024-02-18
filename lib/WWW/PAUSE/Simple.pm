@@ -245,12 +245,17 @@ sub _request {
         if ($resp->code =~ /^[5]/) {
             $tries++;
             my $delay = $strategy->failure;
-            log_warn("Got error %s (%s) from server when POST-ing to %s%s, retrying (%d/%d) in %d second(s) ...",
-                     $resp->code, $resp->message,
-                     $url,
-                     $args{note} ? " ($args{note})" : "",
-                     $tries, $args{retries}, $delay);
-            sleep $delay;
+            if ($delay < 0) {
+                log_warn("Got error %s (%s) from server when POST-ing to %s%s, giving up");
+                last;
+            } else {
+                log_warn("Got error %s (%s) from server when POST-ing to %s%s, retrying (%d/%d) in %d second(s) ...",
+                         $resp->code, $resp->message,
+                         $url,
+                         $args{note} ? " ($args{note})" : "",
+                         $tries, $args{retries}, $delay);
+                sleep $delay;
+            }
             next;
         }
         last;
