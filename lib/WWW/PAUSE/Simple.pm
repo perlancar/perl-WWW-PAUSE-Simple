@@ -246,7 +246,10 @@ sub _request {
             $tries++;
             my $delay = $strategy->failure;
             if ($delay < 0) {
-                log_warn("Got error %s (%s) from server when POST-ing to %s%s, giving up");
+                log_warn("Got error %s (%s) from server when POST-ing to %s%s, giving up",
+                         $resp->code, $resp->message,
+                         $url,
+                         $args{note} ? " ($args{note})" : "");
                 last;
             } else {
                 log_warn("Got error %s (%s) from server when POST-ing to %s%s, retrying (%d/%d) in %d second(s) ...",
